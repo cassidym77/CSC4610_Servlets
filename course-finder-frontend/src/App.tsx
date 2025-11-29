@@ -41,11 +41,11 @@ function App() {
           element: <div>Profile page</div>,
         },
         {
-          path: "/createCourse",
+          path: "/createPost",
           element: <CreateCourse dataService={dataService}/>,
         },
         {
-          path: "/courses",
+          path: "/yourPosts",
           element: <Courses dataService={dataService}/>,
         },
       ]
