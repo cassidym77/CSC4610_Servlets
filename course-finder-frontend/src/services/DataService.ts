@@ -51,6 +51,39 @@ export class DataService {
         return postResultJSON.id
     }
 
+    public async createBlogPost(title: string, content: string, isPublic: boolean){
+        // Map blog post fields to course entry structure for backend compatibility
+        // The backend validation requires course_code and course_name
+        const blogPost = {} as any;  
+        blogPost.course_name = title;  // Map title to course_name (required by backend)
+        // Generate a short code from title for course_code (required by backend)
+        // Use first few words of title, uppercase, max 20 chars
+        const codeFromTitle = title
+            .split(' ')
+            .slice(0, 3)
+            .join('')
+            .toUpperCase()
+            .substring(0, 20) || 'BLOG';
+        blogPost.course_code = codeFromTitle;
+        // Store original blog post fields as additional data
+        blogPost.title = title;
+        blogPost.content = content;
+        blogPost.isPublic = isPublic;
+        const postResult = await fetch(coursesUrl, {
+            method: 'POST',
+            body: JSON.stringify(blogPost),
+            headers: {
+                'Authorization': this.authService.jwtToken!
+            }
+        });
+        if (!postResult.ok) {
+            const errorText = await postResult.text();
+            throw new Error(`Failed to create blog post: ${errorText}`);
+        }
+        const postResultJSON = await postResult.json();
+        return postResultJSON.id
+    }
+
     private async uploadPublicFile(file: File){
         const credentials = await this.authService.getTemporaryCredentials();
         if (!this.s3Client) {

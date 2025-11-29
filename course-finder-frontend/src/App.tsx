@@ -11,6 +11,7 @@ import Courses from './components/courses/Courses';
 import Home from './components/Home';
 import Profile from './components/Profile';
 import CoursesPage from './components/CoursesPage';
+import CreateBlogPost from './components/CreateBlogPost';
 
 const authService = new AuthService();
 const dataService = new DataService(authService);
@@ -49,7 +50,7 @@ function App() {
         },
         {
           path: "/createCourse",
-          element: <CreateCourse dataService={dataService}/>,
+          element: <CreateBlogPost dataService={dataService}/>,
         },
         {
           path: "/yourPosts",
