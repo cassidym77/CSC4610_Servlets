@@ -12,6 +12,7 @@ import Home from './components/Home';
 import Profile from './components/Profile';
 import CoursesPage from './components/CoursesPage';
 import CreateBlogPost from './components/CreateBlogPost';
+import BlogPostDetail from './components/BlogPostDetail';
 
 const authService = new AuthService();
 const dataService = new DataService(authService);
@@ -42,11 +43,15 @@ function App() {
         },
         {
           path: "/profile",
-          element: <Profile />,
+          element: <Profile dataService={dataService}/>,
         },
         {
           path: "/courses",
-          element: <CoursesPage />,
+          element: <CoursesPage dataService={dataService}/>,
+        },
+        {
+          path: "/blog/:id",
+          element: <BlogPostDetail dataService={dataService}/>,
         },
         {
           path: "/createCourse",

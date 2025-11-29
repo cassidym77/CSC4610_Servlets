@@ -1,0 +1,40 @@
+.blogPostComponent {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 15px 0;
+  background-color: #fff;
+  transition: box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.blogPostComponent:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.blogPostTitle {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1.3em;
+}
+
+.blogPostPreview {
+  margin: 10px 0;
+  color: #666;
+  line-height: 1.5;
+}
+
+.blogPostMeta {
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: #999;
+}
+
+.blogPostCode {
+  display: inline-block;
+  background-color: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
