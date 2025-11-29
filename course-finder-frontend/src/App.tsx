@@ -8,6 +8,10 @@ import { AuthService } from './services/AuthService';
 import { DataService } from './services/DataService';
 import CreateCourse from './components/courses/CreateCourse';
 import Courses from './components/courses/Courses';
+import Home from './components/Home';
+import Profile from './components/Profile';
+import CoursesPage from './components/CoursesPage';
+import CreateBlogPost from './components/CreateBlogPost';
 
 const authService = new AuthService();
 const dataService = new DataService(authService);
@@ -26,7 +30,7 @@ function App() {
       children:[
         {
           path: "/",
-          element: <div>Hello world!</div>,
+          element: <Home />,
         },
         {
           path: "/login",
@@ -38,14 +42,18 @@ function App() {
         },
         {
           path: "/profile",
-          element: <div>Profile page</div>,
-        },
-        {
-          path: "/createCourse",
-          element: <CreateCourse dataService={dataService}/>,
+          element: <Profile />,
         },
         {
           path: "/courses",
+          element: <CoursesPage />,
+        },
+        {
+          path: "/createCourse",
+          element: <CreateBlogPost dataService={dataService}/>,
+        },
+        {
+          path: "/yourPosts",
           element: <Courses dataService={dataService}/>,
         },
       ]
