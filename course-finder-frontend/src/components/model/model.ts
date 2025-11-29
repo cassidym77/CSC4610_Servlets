@@ -1,3 +1,20 @@
+export interface Comment {
+    id: string,
+    postId: string,
+    author: string,
+    content: string,
+    createdAt?: string
+}
+
+export interface UserProfile {
+    id: string,  // Will be "profile-{username}"
+    course_code: string,  // Required by backend, set to "PROFILE"
+    course_name: string,  // Required by backend, set to username
+    biography?: string,
+    profilePictureUrl?: string,
+    username: string
+}
+
 export interface CourseEntry {
     id: string,
     course_code: string,
@@ -6,5 +23,6 @@ export interface CourseEntry {
     // Blog post fields (optional, stored as additional data)
     title?: string,
     content?: string,
-    isPublic?: boolean
+    isPublic?: boolean,
+    comments?: Comment[]
 }
