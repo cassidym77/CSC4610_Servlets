@@ -81,7 +81,7 @@
      "S3Bucket": {
       "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
      },
-     "S3Key": "70305bc11bf175990ce00ebbd9a401d15a641a19c86cfdf4fe13cc7ce6277ca5.zip"
+     "S3Key": "0aaee4775853313aae1695148fc8c7e55ab83157ad2b23f522823e2a7459d0cb.zip"
     },
     "Environment": {
      "Variables": {
@@ -109,7 +109,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "LambdaStack/CoursesLambda/Resource",
-    "aws:asset:path": "asset.70305bc11bf175990ce00ebbd9a401d15a641a19c86cfdf4fe13cc7ce6277ca5",
+    "aws:asset:path": "asset.0aaee4775853313aae1695148fc8c7e55ab83157ad2b23f522823e2a7459d0cb",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
