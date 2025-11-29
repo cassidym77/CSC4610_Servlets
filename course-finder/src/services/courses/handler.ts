@@ -1,9 +1,9 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from "aws-lambda";
-import { postCourses } from "./PostCourses";
-import { getCourses } from "./GetCourses";
-import { updateCourse } from "./UpdateCourse";
-import { deleteCourse } from "./DeleteCourse";
+import { postBlgPst } from "./PostBlgPst";
+import { getPost } from "./GetPost";
+import { updatePost } from "./UpdatePost";
+import { deletePost } from "./DeletePost";
 import { JsonError, MissingFieldError } from "../shared/Validator";
 import { addCorsHeader } from "../shared/Utils";
 
@@ -16,19 +16,19 @@ async function handler(event: APIGatewayProxyEvent, context: Context): Promise<A
     try {
         switch (event.httpMethod) {
             case 'GET':
-                const getResponse = await getCourses(event, ddbClient);
+                const getResponse = await getPost(event, ddbClient);
                 response = getResponse;
                 break;
             case 'POST':
-                const postResponse = await postCourses(event, ddbClient);
+                const postResponse = await postBlgPst(event, ddbClient);
                 response = postResponse;
                 break;
             case 'PUT':
-                const putResponse = await updateCourse(event, ddbClient);
+                const putResponse = await updatePost(event, ddbClient);
                 response = putResponse;
                 break;
             case 'DELETE':
-                const deleteResponse = await deleteCourse(event, ddbClient);
+                const deleteResponse = await deletePost(event, ddbClient);
                 response = deleteResponse;
                 break;
             default:

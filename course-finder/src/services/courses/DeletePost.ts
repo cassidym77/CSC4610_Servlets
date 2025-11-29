@@ -4,7 +4,7 @@ import { hasAdminGroup } from "../shared/Utils";
 
 
 
-export async function deleteCourse(event: APIGatewayProxyEvent, ddbClient: DynamoDBClient): Promise<APIGatewayProxyResult> {
+export async function deletePost(event: APIGatewayProxyEvent, ddbClient: DynamoDBClient): Promise<APIGatewayProxyResult> {
 
     if (!hasAdminGroup(event)) {
         return {
@@ -15,18 +15,18 @@ export async function deleteCourse(event: APIGatewayProxyEvent, ddbClient: Dynam
 
     if(event.queryStringParameters && ('id' in event.queryStringParameters)) {
 
-        const courseId = event.queryStringParameters['id'];
+        const postId = event.queryStringParameters['id'];
 
         await ddbClient.send(new DeleteItemCommand({
             TableName: process.env.TABLE_NAME,
             Key: {
-                'id': {S: courseId}
+                'id': {S: postId}
             }
         }));
 
         return {
             statusCode: 200,
-            body: JSON.stringify(`Deleted course with id ${courseId}`)
+            body: JSON.stringify(`Deleted course with id ${postId}`)
         }
 
     }

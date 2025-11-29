@@ -4,16 +4,16 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 
 
-export async function getCourses(event: APIGatewayProxyEvent, ddbClient: DynamoDBClient): Promise<APIGatewayProxyResult> {
+export async function getPost(event: APIGatewayProxyEvent, ddbClient: DynamoDBClient): Promise<APIGatewayProxyResult> {
 
 
     if(event.queryStringParameters) {
         if ('id' in event.queryStringParameters) {
-            const courseId = event.queryStringParameters['id'];
+            const postId = event.queryStringParameters['id'];
             const getItemResponse = await ddbClient.send(new GetItemCommand({
                 TableName: process.env.TABLE_NAME,
                 Key: {
-                    'id': {S: courseId}
+                    'id': {S: postId}
                 }
             }))
             if (getItemResponse.Item) {
@@ -25,7 +25,7 @@ export async function getCourses(event: APIGatewayProxyEvent, ddbClient: DynamoD
             } else {
                 return {
                     statusCode: 404,
-                    body: JSON.stringify(`Course with id ${courseId} not found!`)
+                    body: JSON.stringify(`Course with id ${postId} not found!`)
                 }
             }
         } else {

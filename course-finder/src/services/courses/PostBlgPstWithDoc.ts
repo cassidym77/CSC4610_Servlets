@@ -5,7 +5,7 @@ import { v4 } from "uuid";
 
 
 
-export async function postCoursesWithDoc(event: APIGatewayProxyEvent, ddbClient: DynamoDBClient): Promise<APIGatewayProxyResult> {
+export async function postBlgPstWithDoc(event: APIGatewayProxyEvent, ddbClient: DynamoDBClient): Promise<APIGatewayProxyResult> {
 
 
     const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);

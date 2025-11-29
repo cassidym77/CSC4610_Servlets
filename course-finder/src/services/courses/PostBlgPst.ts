@@ -4,7 +4,7 @@ import { validateAsCourseEntry } from "../shared/Validator";
 import { marshall } from "@aws-sdk/util-dynamodb";
 import { createRandomId, parseJSON } from "../shared/Utils";
 
-export async function postCourses(event: APIGatewayProxyEvent, ddbClient: DynamoDBClient): Promise<APIGatewayProxyResult> {
+export async function postBlgPst(event: APIGatewayProxyEvent, ddbClient: DynamoDBClient): Promise<APIGatewayProxyResult> {
 
     const randomId = createRandomId();
     const item = parseJSON(event.body);
