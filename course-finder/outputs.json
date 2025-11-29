@@ -1,0 +1,23 @@
+{
+  "DataStack": {
+    "ExportsOutputFnGetAttCourseFinderPhotosA679D72AArn0552C0F8": "arn:aws:s3:::course-finder-photos-12dbddc3428d",
+    "ExportsOutputFnGetAttCoursesTable3F79D98EArnCF27E0FA": "arn:aws:dynamodb:us-east-1:182066453421:table/CourseTable-12dbddc3428d",
+    "CourseFinderPhotosBucketName": "course-finder-photos-12dbddc3428d",
+    "ExportsOutputRefCoursesTable3F79D98E1FB54C97": "CourseTable-12dbddc3428d"
+  },
+  "LambdaStack": {
+    "ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665": "arn:aws:lambda:us-east-1:182066453421:function:LambdaStack-CoursesLambdaDB1FA9CA-PQzGWGtJmnKf"
+  },
+  "AuthStack": {
+    "CourseUserPoolId": "us-east-1_apDXDVPqf",
+    "CourseIdentityPoolId": "us-east-1:effcd346-355b-46d5-8202-fa38f242e582",
+    "CourseUserPoolClientId": "1q52v6s1a290pq4uo5bhjlq941",
+    "ExportsOutputFnGetAttCourseUserPoolE5742543ArnEC87DBD7": "arn:aws:cognito-idp:us-east-1:182066453421:userpool/us-east-1_apDXDVPqf"
+  },
+  "UiDeploymentStack": {
+    "CourseFinderUrl": "d1igxge17piu96.cloudfront.net"
+  },
+  "ApiStack": {
+    "CoursesApiEndpoint75C265A0": "https://ywdk78jzs8.execute-api.us-east-1.amazonaws.com/prod/"
+  }
+}

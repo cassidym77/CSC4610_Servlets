@@ -1,0 +1,1009 @@
+{
+ "Resources": {
+  "CoursesApi4BF3B61D": {
+   "Type": "AWS::ApiGateway::RestApi",
+   "Properties": {
+    "Name": "CoursesApi"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Resource"
+   }
+  },
+  "CoursesApiCloudWatchRole592D814C": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "apigateway.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+       ]
+      ]
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/CloudWatchRole/Resource"
+   }
+  },
+  "CoursesApiAccount28D21458": {
+   "Type": "AWS::ApiGateway::Account",
+   "Properties": {
+    "CloudWatchRoleArn": {
+     "Fn::GetAtt": [
+      "CoursesApiCloudWatchRole592D814C",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "CoursesApi4BF3B61D"
+   ],
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Account"
+   }
+  },
+  "CoursesApiDeployment870B9FF2c6ce6d550ab4eac9d336f116f654d711": {
+   "Type": "AWS::ApiGateway::Deployment",
+   "Properties": {
+    "Description": "Automatically created by the RestApi construct",
+    "RestApiId": {
+     "Ref": "CoursesApi4BF3B61D"
+    }
+   },
+   "DependsOn": [
+    "CoursesApicoursesDELETEBFD7B0E3",
+    "CoursesApicoursesGET174853BF",
+    "CoursesApicoursesOPTIONSF89DD87E",
+    "CoursesApicoursesPOST9893FD20",
+    "CoursesApicoursesPUT4D16FA6A",
+    "CoursesApicourses87D01585"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Deployment/Resource",
+    "aws:cdk:do-not-refactor": true
+   }
+  },
+  "CoursesApiDeploymentStageprod964E1798": {
+   "Type": "AWS::ApiGateway::Stage",
+   "Properties": {
+    "DeploymentId": {
+     "Ref": "CoursesApiDeployment870B9FF2c6ce6d550ab4eac9d336f116f654d711"
+    },
+    "RestApiId": {
+     "Ref": "CoursesApi4BF3B61D"
+    },
+    "StageName": "prod"
+   },
+   "DependsOn": [
+    "CoursesApiAccount28D21458"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/DeploymentStage.prod/Resource"
+   }
+  },
+  "CoursesApicourses87D01585": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "CoursesApi4BF3B61D",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "courses",
+    "RestApiId": {
+     "Ref": "CoursesApi4BF3B61D"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/Resource"
+   }
+  },
+  "CoursesApicoursesOPTIONSF89DD87E": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "CoursesApicourses87D01585"
+    },
+    "RestApiId": {
+     "Ref": "CoursesApi4BF3B61D"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/OPTIONS/Resource"
+   }
+  },
+  "CoursesApicoursesGETApiPermissionApiStackCoursesApi34853C91GETcourses68B2D7E1": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::ImportValue": "LambdaStack:ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665"
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "CoursesApi4BF3B61D"
+       },
+       "/",
+       {
+        "Ref": "CoursesApiDeploymentStageprod964E1798"
+       },
+       "/GET/courses"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/GET/ApiPermission.ApiStackCoursesApi34853C91.GET..courses"
+   }
+  },
+  "CoursesApicoursesGETApiPermissionTestApiStackCoursesApi34853C91GETcourses80EE5738": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::ImportValue": "LambdaStack:ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665"
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "CoursesApi4BF3B61D"
+       },
+       "/test-invoke-stage/GET/courses"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/GET/ApiPermission.Test.ApiStackCoursesApi34853C91.GET..courses"
+   }
+  },
+  "CoursesApicoursesGET174853BF": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CoursesApiAuthorizer0A66DF67"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::ImportValue": "LambdaStack:ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665"
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "CoursesApicourses87D01585"
+    },
+    "RestApiId": {
+     "Ref": "CoursesApi4BF3B61D"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/GET/Resource"
+   }
+  },
+  "CoursesApicoursesPOSTApiPermissionApiStackCoursesApi34853C91POSTcourses698A0098": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::ImportValue": "LambdaStack:ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665"
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "CoursesApi4BF3B61D"
+       },
+       "/",
+       {
+        "Ref": "CoursesApiDeploymentStageprod964E1798"
+       },
+       "/POST/courses"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/POST/ApiPermission.ApiStackCoursesApi34853C91.POST..courses"
+   }
+  },
+  "CoursesApicoursesPOSTApiPermissionTestApiStackCoursesApi34853C91POSTcoursesED4A03DE": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::ImportValue": "LambdaStack:ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665"
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "CoursesApi4BF3B61D"
+       },
+       "/test-invoke-stage/POST/courses"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/POST/ApiPermission.Test.ApiStackCoursesApi34853C91.POST..courses"
+   }
+  },
+  "CoursesApicoursesPOST9893FD20": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CoursesApiAuthorizer0A66DF67"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::ImportValue": "LambdaStack:ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665"
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "CoursesApicourses87D01585"
+    },
+    "RestApiId": {
+     "Ref": "CoursesApi4BF3B61D"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/POST/Resource"
+   }
+  },
+  "CoursesApicoursesPUTApiPermissionApiStackCoursesApi34853C91PUTcourses9DDD46E5": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::ImportValue": "LambdaStack:ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665"
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "CoursesApi4BF3B61D"
+       },
+       "/",
+       {
+        "Ref": "CoursesApiDeploymentStageprod964E1798"
+       },
+       "/PUT/courses"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/PUT/ApiPermission.ApiStackCoursesApi34853C91.PUT..courses"
+   }
+  },
+  "CoursesApicoursesPUTApiPermissionTestApiStackCoursesApi34853C91PUTcourses7EC40EC2": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::ImportValue": "LambdaStack:ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665"
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "CoursesApi4BF3B61D"
+       },
+       "/test-invoke-stage/PUT/courses"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/PUT/ApiPermission.Test.ApiStackCoursesApi34853C91.PUT..courses"
+   }
+  },
+  "CoursesApicoursesPUT4D16FA6A": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CoursesApiAuthorizer0A66DF67"
+    },
+    "HttpMethod": "PUT",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::ImportValue": "LambdaStack:ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665"
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "CoursesApicourses87D01585"
+    },
+    "RestApiId": {
+     "Ref": "CoursesApi4BF3B61D"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/PUT/Resource"
+   }
+  },
+  "CoursesApicoursesDELETEApiPermissionApiStackCoursesApi34853C91DELETEcoursesE0113701": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::ImportValue": "LambdaStack:ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665"
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "CoursesApi4BF3B61D"
+       },
+       "/",
+       {
+        "Ref": "CoursesApiDeploymentStageprod964E1798"
+       },
+       "/DELETE/courses"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/DELETE/ApiPermission.ApiStackCoursesApi34853C91.DELETE..courses"
+   }
+  },
+  "CoursesApicoursesDELETEApiPermissionTestApiStackCoursesApi34853C91DELETEcourses3B14C99A": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::ImportValue": "LambdaStack:ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665"
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "CoursesApi4BF3B61D"
+       },
+       "/test-invoke-stage/DELETE/courses"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/DELETE/ApiPermission.Test.ApiStackCoursesApi34853C91.DELETE..courses"
+   }
+  },
+  "CoursesApicoursesDELETEBFD7B0E3": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CoursesApiAuthorizer0A66DF67"
+    },
+    "HttpMethod": "DELETE",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::ImportValue": "LambdaStack:ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665"
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "CoursesApicourses87D01585"
+    },
+    "RestApiId": {
+     "Ref": "CoursesApi4BF3B61D"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApi/Default/courses/DELETE/Resource"
+   }
+  },
+  "CoursesApiAuthorizer0A66DF67": {
+   "Type": "AWS::ApiGateway::Authorizer",
+   "Properties": {
+    "IdentitySource": "method.request.header.Authorization",
+    "Name": "ApiStackCoursesApiAuthorizer60F8404A",
+    "ProviderARNs": [
+     {
+      "Fn::ImportValue": "AuthStack:ExportsOutputFnGetAttCourseUserPoolE5742543ArnEC87DBD7"
+     }
+    ],
+    "RestApiId": {
+     "Ref": "CoursesApi4BF3B61D"
+    },
+    "Type": "COGNITO_USER_POOLS"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CoursesApiAuthorizer/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1WOu27DMAxFvyW7rDoGOnR007Vo4CBzwciMw0QSDZGKkRr+98J1H+nEc89wLytbrUtbrmCQwrWXwtPBjjsFdzEwyPsIPXWgOMDNjg2K1j2ZzTHeYe0c56jmBXvPt4BRZ3uXdgodzm6BBoVzcvgM8he+Oxd+RT1xO6sf4i6S8l4wbZm91FlPnOgD09cDv2kyBMGODfulkD1OxkM4tGA3x7jFFEiEOE7/ht+y9lknE7lFe5aHa1Xa9ZN9XJ2FqEg5KgW0zXI/AW6uBEsxAQAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ApiStack/CDKMetadata/Default"
+   },
+   "Condition": "CDKMetadataAvailable"
+  }
+ },
+ "Outputs": {
+  "CoursesApiEndpoint75C265A0": {
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "CoursesApi4BF3B61D"
+      },
+      ".execute-api.",
+      {
+       "Ref": "AWS::Region"
+      },
+      ".",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "CoursesApiDeploymentStageprod964E1798"
+      },
+      "/"
+     ]
+    ]
+   }
+  }
+ },
+ "Conditions": {
+  "CDKMetadataAvailable": {
+   "Fn::Or": [
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "af-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-3"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-south-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-3"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-4"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ca-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ca-west-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "cn-north-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "cn-northwest-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-central-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-north-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-south-2"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-3"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "il-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "me-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "me-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "sa-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-east-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-west-1"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Equals": [
+      {
+       "Ref": "AWS::Region"
+      },
+      "us-west-2"
+     ]
+    }
+   ]
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

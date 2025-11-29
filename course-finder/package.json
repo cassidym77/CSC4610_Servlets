@@ -1,0 +1,41 @@
+{
+  "name": "course-finder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test-services": "jest --config jest.services.config.ts",
+    "test-infra": "jest --config jest.infra.config.ts",
+    "test": "npm run test-services && npm run test-infra",
+    "deploy": "cdk deploy --all --outputs-file outputs.json --require-approval never"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {   
+    "@types/aws-lambda": "^8.10.152",
+    "@types/node": "^24.2.1",
+    "aws-cdk": "^2.1024.0",
+    "aws-cdk-lib": "^2.210.0",
+    "constructs": "^10.4.2",
+    "esbuild": "^0.25.8",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@aws-amplify/auth": "^6.15.0",
+    "@aws-sdk/client-cognito-identity": "^3.864.0",
+    "@aws-sdk/client-dynamodb": "^3.864.0",
+    "@aws-sdk/client-s3": "^3.864.0",
+    "@aws-sdk/credential-providers": "^3.864.0",
+    "@aws-sdk/lib-dynamodb": "^3.864.0",
+    "@aws-sdk/util-dynamodb": "^3.864.0",
+    "@types/jest": "^30.0.0",
+    "@types/uuid": "^10.0.0",
+    "aws-amplify": "^6.15.5",
+    "aws-xray-sdk-core": "^3.10.3",
+    "jest": "^30.0.5",
+    "ts-jest": "^29.4.1",
+    "uuid": "^11.1.0"
+  }
+}

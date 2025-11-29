@@ -1,0 +1,34 @@
+{
+  "version": "48.0.0",
+  "files": {
+    "2b6067fba8212d4a547e8cde519343c0a46a51b8c0638e27a53a2d5e9c1dbd70": {
+      "displayName": "CoursesLambda/Code",
+      "source": {
+        "path": "C:\\Users\\Cassidy\\OneDrive - Louisiana State University\\Desktop\\CSC4610_Servlets\\course-finder",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "current_account-current_region-f06c107c": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}",
+          "objectKey": "2b6067fba8212d4a547e8cde519343c0a46a51b8c0638e27a53a2d5e9c1dbd70.zip",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    },
+    "d9f6b772e12f0ac01d542acacd38004fd36756bc22aa0d40023b07d212c51927": {
+      "displayName": "LambdaStack Template",
+      "source": {
+        "path": "LambdaStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "current_account-current_region-a97543f9": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}",
+          "objectKey": "d9f6b772e12f0ac01d542acacd38004fd36756bc22aa0d40023b07d212c51927.json",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}
