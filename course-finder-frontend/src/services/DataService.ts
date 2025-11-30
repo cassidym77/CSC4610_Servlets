@@ -237,35 +237,28 @@ export class DataService {
         }
         const profileId = `profile-${username}`;
         
-        const profile: UserProfile = {
-            id: profileId,
-            course_code: 'PROFILE',  // Required by backend
-            course_name: username,   // Required by backend
-            biography: biography,
-            profilePictureUrl: profilePictureUrl,
-            username: username
-        };
-
         // Try to get existing profile first
         const existingProfile = await this.getUserProfile();
         
         if (existingProfile) {
-            // Update existing profile
-            const updateResult = await fetch(`${coursesUrl}?id=${profileId}`, {
+            // Update existing profile - Update one field at a time (backend limitation)
+            // Update biography
+            const biographyUpdateResult = await fetch(`${coursesUrl}?id=${profileId}`, {
                 method: 'PUT',
-                body: JSON.stringify({ biography: biography }),
+                body: JSON.stringify({ biography: biography || '' }),
                 headers: {
                     'Authorization': this.authService.jwtToken!,
                     'Content-Type': 'application/json'
                 }
             });
-            if (!updateResult.ok) {
-                throw new Error(`Failed to update profile: ${await updateResult.text()}`);
+            if (!biographyUpdateResult.ok) {
+                const errorText = await biographyUpdateResult.text();
+                throw new Error(`Failed to update biography: ${errorText}`);
             }
             
-            // Update profile picture URL if provided
-            if (profilePictureUrl) {
-                await fetch(`${coursesUrl}?id=${profileId}`, {
+            // Update profile picture URL if provided (and it's not a blob URL)
+            if (profilePictureUrl && !profilePictureUrl.startsWith('blob:')) {
+                const pictureUpdateResult = await fetch(`${coursesUrl}?id=${profileId}`, {
                     method: 'PUT',
                     body: JSON.stringify({ profilePictureUrl: profilePictureUrl }),
                     headers: {
@@ -273,9 +266,22 @@ export class DataService {
                         'Content-Type': 'application/json'
                     }
                 });
+                if (!pictureUpdateResult.ok) {
+                    const errorText = await pictureUpdateResult.text();
+                    throw new Error(`Failed to update profile picture: ${errorText}`);
+                }
             }
         } else {
             // Create new profile
+            const profile: UserProfile = {
+                id: profileId,
+                course_code: 'PROFILE',  // Required by backend
+                course_name: username,   // Required by backend
+                biography: biography || '',
+                profilePictureUrl: (profilePictureUrl && !profilePictureUrl.startsWith('blob:')) ? profilePictureUrl : undefined,
+                username: username
+            };
+            
             const postResult = await fetch(coursesUrl, {
                 method: 'POST',
                 body: JSON.stringify(profile),

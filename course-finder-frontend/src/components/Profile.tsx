@@ -76,11 +76,18 @@ export default function Profile({ dataService }: ProfileProps) {
       setError("");
       setSuccess("");
 
-      let finalProfilePictureUrl = profilePictureUrl;
+      let finalProfilePictureUrl: string | undefined = undefined;
 
       // Upload new profile picture if one was selected
       if (profilePicture) {
-        finalProfilePictureUrl = await dataService.uploadProfilePicture(profilePicture);
+        try {
+          finalProfilePictureUrl = await dataService.uploadProfilePicture(profilePicture);
+        } catch (uploadErr: any) {
+          throw new Error(`Failed to upload profile picture: ${uploadErr.message}`);
+        }
+      } else if (profilePictureUrl && !profilePictureUrl.startsWith('blob:')) {
+        // Keep existing profile picture URL if it's not a blob URL (preview)
+        finalProfilePictureUrl = profilePictureUrl;
       }
 
       // Save profile
@@ -89,11 +96,23 @@ export default function Profile({ dataService }: ProfileProps) {
       setSuccess("Profile updated successfully!");
       setProfilePicture(undefined); // Clear file input
       
-      // Reload profile
+      // Reload profile to get updated data
       const updatedProfile = await dataService.getUserProfile();
       if (updatedProfile) {
         setProfile(updatedProfile);
-        setProfilePictureUrl(updatedProfile.profilePictureUrl || "");
+        // Use the server URL, not the blob preview
+        if (updatedProfile.profilePictureUrl) {
+          setProfilePictureUrl(updatedProfile.profilePictureUrl);
+        } else if (finalProfilePictureUrl && !finalProfilePictureUrl.startsWith('blob:')) {
+          setProfilePictureUrl(finalProfilePictureUrl);
+        } else {
+          setProfilePictureUrl("");
+        }
+      } else {
+        // If profile doesn't exist yet, clear blob URLs
+        if (profilePictureUrl && profilePictureUrl.startsWith('blob:')) {
+          setProfilePictureUrl("");
+        }
       }
     } catch (err: any) {
       setError(err.message || "Failed to update profile. Please try again.");
