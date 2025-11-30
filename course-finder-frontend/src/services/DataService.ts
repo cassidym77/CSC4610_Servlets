@@ -43,10 +43,23 @@ export class DataService {
         // Filter for public blog posts (has title/content and isPublic is true)
         // Also parse comments if stored as JSON string
         return allPosts
-            .filter(post => 
-                post.title && post.content && post.isPublic === true
-            )
+            .filter(post => {
+                // Ensure post has required fields and is not a profile
+                if (!post.title || !post.content || post.id?.startsWith('profile-')) {
+                    return false;
+                }
+                // Parse isPublic if it's a string
+                let isPublic = post.isPublic;
+                if (typeof isPublic === 'string') {
+                    isPublic = isPublic === 'true' || isPublic === 'True';
+                }
+                return isPublic === true;
+            })
             .map(post => {
+                // Parse isPublic if it's stored as a string
+                if (post.isPublic !== undefined && typeof post.isPublic === 'string') {
+                    post.isPublic = post.isPublic === 'true' || post.isPublic === 'True';
+                }
                 // Parse comments if it's stored as a JSON string
                 if (post.comments && typeof post.comments === 'string') {
                     try {
@@ -149,26 +162,36 @@ export class DataService {
     public async createBlogPost(title: string, content: string, isPublic: boolean){
         // Map blog post fields to course entry structure for backend compatibility
         // The backend validation requires course_code and course_name
+        // IMPORTANT: Do NOT include 'id' field - backend will generate a unique ID
         const blogPost = {} as any;  
         blogPost.course_name = title;  // Map title to course_name (required by backend)
         // Generate a short code from title for course_code (required by backend)
         // Use first few words of title, uppercase, max 20 chars
-        const codeFromTitle = title
+        // Add timestamp to ensure uniqueness even with similar titles
+        const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+        const codeFromTitle = (title
             .split(' ')
             .slice(0, 3)
             .join('')
             .toUpperCase()
-            .substring(0, 20) || 'BLOG';
+            .substring(0, 14) || 'BLOG') + timestamp;
         blogPost.course_code = codeFromTitle;
         // Store original blog post fields as additional data
         blogPost.title = title;
         blogPost.content = content;
         blogPost.isPublic = isPublic;
+        
+        // Ensure we never send an 'id' field - backend must generate it
+        if (blogPost.id) {
+            delete blogPost.id;
+        }
+        
         const postResult = await fetch(coursesUrl, {
             method: 'POST',
             body: JSON.stringify(blogPost),
             headers: {
-                'Authorization': this.authService.jwtToken!
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
             }
         });
         if (!postResult.ok) {
@@ -176,6 +199,9 @@ export class DataService {
             throw new Error(`Failed to create blog post: ${errorText}`);
         }
         const postResultJSON = await postResult.json();
+        if (!postResultJSON.id) {
+            throw new Error('Backend did not return a post ID');
+        }
         return postResultJSON.id
     }
 
@@ -345,10 +371,23 @@ export class DataService {
         // Filter for private blog posts (has title/content and isPublic is false)
         // Also parse comments if stored as JSON string
         return allPosts
-            .filter(post => 
-                post.title && post.content && post.isPublic === false && !post.id.startsWith('profile-')
-            )
+            .filter(post => {
+                // Ensure post has required fields and is not a profile
+                if (!post.title || !post.content || !post.id || post.id.startsWith('profile-')) {
+                    return false;
+                }
+                // Parse isPublic if it's a string
+                let isPublic = post.isPublic;
+                if (typeof isPublic === 'string') {
+                    isPublic = isPublic === 'true' || isPublic === 'True';
+                }
+                return isPublic === false;
+            })
             .map(post => {
+                // Parse isPublic if it's stored as a string
+                if (post.isPublic !== undefined && typeof post.isPublic === 'string') {
+                    post.isPublic = post.isPublic === 'true' || post.isPublic === 'True';
+                }
                 // Parse comments if it's stored as a JSON string
                 if (post.comments && typeof post.comments === 'string') {
                     try {
@@ -360,5 +399,144 @@ export class DataService {
                 }
                 return post;
             });
+    }
+
+    public async updateBlogPost(postId: string, title: string, content: string, isPublic: boolean): Promise<void> {
+        if (!this.authService.isAuthorized()) {
+            throw new Error('User must be logged in to update posts');
+        }
+
+        // Get the current post to preserve other fields and verify it exists
+        const currentPost = await this.getBlogPostById(postId);
+        if (!currentPost || !currentPost.id) {
+            throw new Error('Post not found or invalid');
+        }
+
+        // Ensure we preserve the original ID - never update it
+        // Update title (mapped to course_name) - required by backend
+        const titleUpdateResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ course_name: title }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!titleUpdateResult.ok) {
+            throw new Error(`Failed to update title: ${await titleUpdateResult.text()}`);
+        }
+
+        // Update title field (blog post field)
+        const titleFieldResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ title: title }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!titleFieldResult.ok) {
+            console.warn('Failed to update title field:', await titleFieldResult.text());
+        }
+
+        // Update content
+        const contentResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ content: content }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!contentResult.ok) {
+            throw new Error(`Failed to update content: ${await contentResult.text()}`);
+        }
+
+        // Update isPublic - store as boolean string for backend compatibility
+        // Backend UpdatePost expects string values, but we'll store it as "true"/"false"
+        const isPublicResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ isPublic: isPublic ? 'true' : 'false' }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!isPublicResult.ok) {
+            console.warn('Failed to update isPublic:', await isPublicResult.text());
+        }
+
+        // Update course_code (generate from title) - required by backend
+        const codeFromTitle = title
+            .split(' ')
+            .slice(0, 3)
+            .join('')
+            .toUpperCase()
+            .substring(0, 20) || 'BLOG';
+        const codeResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ course_code: codeFromTitle }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!codeResult.ok) {
+            console.warn('Failed to update course_code:', await codeResult.text());
+        }
+
+        // IMPORTANT: Never update the 'id' field - it's the primary key and must remain unchanged
+    }
+
+    public async deleteBlogPost(postId: string): Promise<void> {
+        if (!this.authService.isAuthorized()) {
+            throw new Error('User must be logged in to delete posts');
+        }
+
+        // Note: Backend delete requires admin access, but we'll attempt it
+        const deleteResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!deleteResult.ok) {
+            const errorText = await deleteResult.text();
+            // If it's a 401, it means the user doesn't have admin access
+            if (deleteResult.status === 401) {
+                throw new Error('You do not have permission to delete posts. Admin access required.');
+            }
+            throw new Error(`Failed to delete post: ${errorText}`);
+        }
+    }
+
+    public async isPostOwner(post: CourseEntry): Promise<boolean> {
+        if (!this.authService.isAuthorized()) {
+            return false;
+        }
+        const username = this.authService.getUserName();
+        if (!username) {
+            return false;
+        }
+        // For private posts, check if it's in the user's private posts list
+        if (post.isPublic === false) {
+            const userPrivatePosts = await this.getUserPrivatePosts();
+            return userPrivatePosts.some(p => p.id === post.id);
+        }
+        // For public posts, we need to check all user's posts (both public and private)
+        // Get all posts and filter for ones that belong to this user
+        try {
+            const allPosts = await this.getCourses();
+            // Check if this post exists in the user's posts
+            // Since we don't have an explicit author field, we'll check if it's in private posts
+            // or if we can determine ownership another way
+            const userPrivatePosts = await this.getUserPrivatePosts();
+            return userPrivatePosts.some(p => p.id === post.id);
+        } catch (error) {
+            console.error('Error checking post ownership:', error);
+            return false;
+        }
     }
 }

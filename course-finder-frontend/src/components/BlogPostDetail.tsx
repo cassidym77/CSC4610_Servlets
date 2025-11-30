@@ -17,6 +17,8 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
   const [commentText, setCommentText] = useState<string>("");
   const [submittingComment, setSubmittingComment] = useState<boolean>(false);
   const [commentError, setCommentError] = useState<string>("");
+  const [isOwner, setIsOwner] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -39,6 +41,14 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
         
         setPost(fetchedPost);
         setError("");
+        // Check if current user is the owner
+        try {
+          const owner = await dataService.isPostOwner(fetchedPost);
+          setIsOwner(owner);
+        } catch (ownerErr) {
+          console.error('Error checking ownership:', ownerErr);
+          setIsOwner(false);
+        }
       } catch (err: any) {
         setError(err.message || "Failed to load blog post. Please try again later.");
         console.error("Error fetching post:", err);
@@ -48,6 +58,23 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
     };
     fetchPost();
   }, [id, dataService]);
+
+  const handleDelete = async () => {
+    if (!id || !window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      await dataService.deleteBlogPost(id);
+      navigate('/courses');
+    } catch (err: any) {
+      setError(err.message || "Failed to delete post. Please try again.");
+      console.error("Error deleting post:", err);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleCommentSubmit = async (event: SyntheticEvent) => {
     event.preventDefault();
@@ -103,7 +130,26 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
       </button>
       
       <article className="blogPostContent">
-        <h1>{post.title || post.course_name}</h1>
+        <div className="postHeader">
+          <h1>{post.title || post.course_name}</h1>
+          {isOwner && (
+            <div className="postActions">
+              <button 
+                onClick={() => navigate(`/edit/${id}`)}
+                className="editButton"
+              >
+                Edit
+              </button>
+              <button 
+                onClick={handleDelete}
+                disabled={deleting}
+                className="deleteButton"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          )}
+        </div>
         <div className="blogPostMeta">
           <span className="postCode">{post.course_code}</span>
         </div>

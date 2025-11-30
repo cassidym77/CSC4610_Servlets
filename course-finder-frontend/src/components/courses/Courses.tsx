@@ -57,7 +57,22 @@ export default function Courses(props: CoursesProps){
         return (
             <div>
                 {posts.map((post) => (
-                    <BlogPostComponent key={post.id} post={post} />
+                    <BlogPostComponent 
+                        key={post.id} 
+                        post={post} 
+                        dataService={props.dataService}
+                        showActions={true}
+                        onDelete={async (postId) => {
+                            try {
+                                await props.dataService.deleteBlogPost(postId);
+                                // Refresh the list
+                                const updatedPosts = await props.dataService.getUserPrivatePosts();
+                                setPosts(updatedPosts);
+                            } catch (err: any) {
+                                alert(err.message || 'Failed to delete post');
+                            }
+                        }}
+                    />
                 ))}
             </div>
         );
