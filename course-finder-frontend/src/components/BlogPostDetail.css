@@ -26,10 +26,57 @@
   margin-bottom: 30px;
 }
 
-.blogPostContent h1 {
-  margin: 0 0 15px 0;
+.postHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  gap: 20px;
+}
+
+.postHeader h1 {
+  margin: 0;
   color: #333;
   font-size: 2em;
+  flex: 1;
+}
+
+.postActions {
+  display: flex;
+  gap: 10px;
+}
+
+.editButton {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.editButton:hover {
+  background-color: #357abd;
+}
+
+.deleteButton {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.deleteButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
 .blogPostMeta {

@@ -38,4 +38,38 @@
   font-size: 0.85em;
 }
 
+.postComponentActions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.editButtonSmall {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.editButtonSmall:hover {
+  background-color: #357abd;
+}
+
+.deleteButtonSmall {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.deleteButtonSmall:hover {
+  background-color: #c82333;
+}
+
 

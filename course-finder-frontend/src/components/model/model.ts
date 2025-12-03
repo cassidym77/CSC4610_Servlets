@@ -24,5 +24,6 @@ export interface CourseEntry {
     title?: string,
     content?: string,
     isPublic?: boolean,
+    authorId?: string,  // Username of the post author
     comments?: Comment[]
 }
