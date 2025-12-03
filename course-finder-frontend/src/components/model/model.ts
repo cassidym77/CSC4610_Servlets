@@ -29,5 +29,10 @@ export interface CourseEntry {
     content?: string,
     isPublic?: boolean,
     authorId?: string,  // Username of the post author
-    comments?: Comment[]
+    comments?: Comment[],
+    // Voting fields
+    upvotes?: number,
+    downvotes?: number,
+    upvotedBy?: string[],  // Array of usernames who upvoted
+    downvotedBy?: string[]  // Array of usernames who downvoted
 }

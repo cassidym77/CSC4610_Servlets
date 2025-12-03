@@ -31,22 +31,43 @@ export default function CoursesPage({ dataService }: CoursesPageProps) {
     fetchPosts();
   }, [dataService]);
 
-  // Filter posts based on search query
+  // Filter and sort posts based on search query and upvotes
   const filteredPosts = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return posts;
+    let result = posts;
+    
+    // Filter by search query if provided
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(post => {
+        const title = (post.title || post.course_name || '').toLowerCase();
+        const content = (post.content || '').toLowerCase();
+        const authorId = (post.authorId || '').toLowerCase();
+        
+        return title.includes(query) || 
+               content.includes(query) || 
+               authorId.includes(query);
+      });
     }
     
-    const query = searchQuery.toLowerCase().trim();
-    return posts.filter(post => {
-      const title = (post.title || post.course_name || '').toLowerCase();
-      const content = (post.content || '').toLowerCase();
-      const authorId = (post.authorId || '').toLowerCase();
+    // Sort by upvotes (descending), then by downvotes (ascending)
+    // Posts with higher upvotes appear first
+    result = [...result].sort((a, b) => {
+      const aUpvotes = a.upvotes ?? 0;
+      const bUpvotes = b.upvotes ?? 0;
+      const aDownvotes = a.downvotes ?? 0;
+      const bDownvotes = b.downvotes ?? 0;
+      const aNet = aUpvotes - aDownvotes;
+      const bNet = bUpvotes - bDownvotes;
       
-      return title.includes(query) || 
-             content.includes(query) || 
-             authorId.includes(query);
+      // Sort by net score (upvotes - downvotes) descending
+      if (bNet !== aNet) {
+        return bNet - aNet;
+      }
+      // If net scores are equal, sort by upvotes descending
+      return bUpvotes - aUpvotes;
     });
+    
+    return result;
   }, [posts, searchQuery]);
 
   if (loading) {
@@ -114,7 +135,7 @@ export default function CoursesPage({ dataService }: CoursesPageProps) {
       ) : (
         <div className="postsList">
           {filteredPosts.map((post) => (
-            <BlogPostComponent key={post.id} post={post} />
+            <BlogPostComponent key={post.id} post={post} dataService={dataService} />
           ))}
         </div>
       )}

@@ -122,6 +122,7 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
   const [commentError, setCommentError] = useState<string>("");
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
+  const [voting, setVoting] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -244,7 +245,57 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
       
       <article className="blogPostContent">
         <div className="postHeader">
-          <h1>{post.title || post.course_name}</h1>
+          <div className="postTitleSection">
+            <h1>{post.title || post.course_name}</h1>
+            {/* Post Voting */}
+            <div className="postVotingDetail">
+              <button
+                onClick={async () => {
+                  if (!dataService.isAuthorized()) return;
+                  try {
+                    setVoting(true);
+                    await dataService.upvotePost(id!);
+                    const updatedPost = await dataService.getBlogPostById(id!);
+                    setPost(updatedPost);
+                  } catch (err: any) {
+                    console.error("Error upvoting:", err);
+                  } finally {
+                    setVoting(false);
+                  }
+                }}
+                disabled={voting || !dataService.isAuthorized()}
+                className={`voteButton upvoteButton ${post.upvotedBy?.includes((dataService as any).authService?.getUserName() || '') ? 'active' : ''}`}
+                title="Upvote"
+                aria-label="Upvote post"
+              >
+                ▲
+              </button>
+              <span className="voteScore" title={`${post.upvotes ?? 0} upvotes, ${post.downvotes ?? 0} downvotes`}>
+                {((post.upvotes ?? 0) - (post.downvotes ?? 0)) > 0 ? '+' : ''}{(post.upvotes ?? 0) - (post.downvotes ?? 0)}
+              </span>
+              <button
+                onClick={async () => {
+                  if (!dataService.isAuthorized()) return;
+                  try {
+                    setVoting(true);
+                    await dataService.downvotePost(id!);
+                    const updatedPost = await dataService.getBlogPostById(id!);
+                    setPost(updatedPost);
+                  } catch (err: any) {
+                    console.error("Error downvoting:", err);
+                  } finally {
+                    setVoting(false);
+                  }
+                }}
+                disabled={voting || !dataService.isAuthorized()}
+                className={`voteButton downvoteButton ${post.downvotedBy?.includes((dataService as any).authService?.getUserName() || '') ? 'active' : ''}`}
+                title="Downvote"
+                aria-label="Downvote post"
+              >
+                ▼
+              </button>
+            </div>
+          </div>
           {isOwner && (
             <div className="postActions">
               <button 
