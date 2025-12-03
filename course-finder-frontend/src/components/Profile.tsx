@@ -1,5 +1,5 @@
 import { useState, useEffect, SyntheticEvent } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { DataService } from "../services/DataService";
 import { UserProfile } from "./model/model";
 import './Profile.css';
@@ -14,6 +14,7 @@ type CustomEvent = {
 
 export default function Profile({ dataService }: ProfileProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [biography, setBiography] = useState<string>("");
   const [profilePicture, setProfilePicture] = useState<File | undefined>();
@@ -31,6 +32,11 @@ export default function Profile({ dataService }: ProfileProps) {
         return;
       }
       try {
+        // Reset state when loading
+        setError("");
+        setSuccess("");
+        setProfilePicture(undefined);
+        
         // Get username
         const authService = (dataService as any).authService;
         if (authService) {
@@ -44,16 +50,28 @@ export default function Profile({ dataService }: ProfileProps) {
         if (userProfile) {
           setProfile(userProfile);
           setBiography(userProfile.biography || "");
-          setProfilePictureUrl(userProfile.profilePictureUrl || "");
+          // Only set profile picture URL if it's a valid S3 URL (not a blob)
+          // Clear any blob URLs that might be lingering
+          if (userProfile.profilePictureUrl && !userProfile.profilePictureUrl.startsWith('blob:')) {
+            setProfilePictureUrl(userProfile.profilePictureUrl);
+          } else {
+            setProfilePictureUrl("");
+          }
+        } else {
+          // Profile doesn't exist yet - reset to empty state
+          setProfile(null);
+          setBiography("");
+          setProfilePictureUrl("");
         }
       } catch (err) {
         console.error("Error loading profile:", err);
+        setError("Failed to load profile. Please try again.");
       } finally {
         setLoading(false);
       }
     };
     loadProfile();
-  }, [dataService]);
+  }, [dataService, location.pathname]); // Reload when navigating to this page
 
   const handleFileChange = (event: CustomEvent) => {
     if (event.target.files && event.target.files[0]) {
