@@ -1,0 +1,90 @@
+.coursesPageContainer {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.coursesPageContainer h1 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.coursesPageContainer > p {
+  margin-bottom: 20px;
+  color: #666;
+}
+
+.searchContainer {
+  position: relative;
+  margin-bottom: 20px;
+  max-width: 600px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 12px 40px 12px 15px;
+  font-size: 16px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.searchInput:focus {
+  border-color: #4CAF50;
+}
+
+.clearSearchButton {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.clearSearchButton:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.searchResultsInfo {
+  margin-bottom: 15px;
+  color: #666;
+  font-style: italic;
+}
+
+.postsList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .coursesPageContainer {
+    padding: 15px;
+  }
+  
+  .searchContainer {
+    max-width: 100%;
+  }
+  
+  .searchInput {
+    font-size: 14px;
+    padding: 10px 35px 10px 12px;
+  }
+}
+

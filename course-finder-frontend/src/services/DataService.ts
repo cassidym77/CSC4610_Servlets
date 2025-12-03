@@ -5,6 +5,46 @@ import { CourseEntry, UserProfile } from "../components/model/model";
 
 const coursesUrl = ApiStack.CoursesApiEndpoint75C265A0 + 'courses'
 
+// Helper function to initialize vote fields for comments (backward compatibility)
+function initializeCommentVotes(comments: any[]): any[] {
+    if (!Array.isArray(comments)) {
+        return [];
+    }
+    return comments.map(comment => ({
+        ...comment,
+        upvotes: comment.upvotes ?? 0,
+        downvotes: comment.downvotes ?? 0,
+        upvotedBy: comment.upvotedBy ?? [],
+        downvotedBy: comment.downvotedBy ?? []
+    }));
+}
+
+// Helper function to initialize vote fields for posts (backward compatibility)
+function initializePostVotes(post: any): any {
+    // Parse vote arrays if they're stored as JSON strings
+    if (post.upvotedBy && typeof post.upvotedBy === 'string') {
+        try {
+            post.upvotedBy = JSON.parse(post.upvotedBy);
+        } catch (e) {
+            post.upvotedBy = [];
+        }
+    }
+    if (post.downvotedBy && typeof post.downvotedBy === 'string') {
+        try {
+            post.downvotedBy = JSON.parse(post.downvotedBy);
+        } catch (e) {
+            post.downvotedBy = [];
+        }
+    }
+    
+    return {
+        ...post,
+        upvotes: post.upvotes !== undefined ? Number(post.upvotes) : 0,
+        downvotes: post.downvotes !== undefined ? Number(post.downvotes) : 0,
+        upvotedBy: post.upvotedBy ?? [],
+        downvotedBy: post.downvotedBy ?? []
+    };
+}
 
 export class DataService {
 
@@ -95,7 +135,13 @@ export class DataService {
             }
         }
         
-        return post;
+        // Initialize vote fields for comments
+        if (post.comments) {
+            post.comments = initializeCommentVotes(post.comments);
+        }
+        
+        // Initialize vote fields for post
+        return initializePostVotes(post);
     }
 
     public async addComment(postId: string, content: string): Promise<string> {
@@ -108,7 +154,11 @@ export class DataService {
             postId: postId,
             author: this.authService.getUserName() || 'Anonymous',
             content: content,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            upvotes: 0,
+            downvotes: 0,
+            upvotedBy: [],
+            downvotedBy: []
         };
 
         // Add comment to post's comments array
@@ -137,6 +187,362 @@ export class DataService {
         }
         
         return comment.id;
+    }
+
+    public async upvotePost(postId: string): Promise<void> {
+        if (!this.authService.isAuthorized()) {
+            throw new Error('User must be logged in to vote on posts');
+        }
+        const username = this.authService.getUserName();
+        if (!username) {
+            throw new Error('Username not found');
+        }
+
+        // Get the current post
+        const post = await this.getBlogPostById(postId);
+        
+        // Initialize vote tracking arrays if they don't exist
+        if (!post.upvotedBy) {
+            post.upvotedBy = [];
+        }
+        if (!post.downvotedBy) {
+            post.downvotedBy = [];
+        }
+        if (post.upvotes === undefined) {
+            post.upvotes = 0;
+        }
+        if (post.downvotes === undefined) {
+            post.downvotes = 0;
+        }
+
+        // Check if user already upvoted
+        const alreadyUpvoted = post.upvotedBy.includes(username);
+        // Check if user already downvoted
+        const alreadyDownvoted = post.downvotedBy.includes(username);
+
+        if (alreadyUpvoted) {
+            // Remove upvote (toggle off)
+            post.upvotedBy = post.upvotedBy.filter(u => u !== username);
+            post.upvotes = Math.max(0, (post.upvotes || 0) - 1);
+        } else {
+            // Add upvote
+            post.upvotedBy.push(username);
+            post.upvotes = (post.upvotes || 0) + 1;
+            
+            // If user previously downvoted, remove that downvote
+            if (alreadyDownvoted) {
+                post.downvotedBy = post.downvotedBy.filter(u => u !== username);
+                post.downvotes = Math.max(0, (post.downvotes || 0) - 1);
+            }
+        }
+
+        // Update the post with modified vote data
+        // Update upvotes count
+        const upvotesResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ upvotes: post.upvotes.toString() }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!upvotesResult.ok) {
+            console.warn('Failed to update upvotes:', await upvotesResult.text());
+        }
+
+        // Update downvotes count
+        const downvotesResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ downvotes: post.downvotes.toString() }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!downvotesResult.ok) {
+            console.warn('Failed to update downvotes:', await downvotesResult.text());
+        }
+
+        // Update upvotedBy array
+        const upvotedByResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ upvotedBy: JSON.stringify(post.upvotedBy) }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!upvotedByResult.ok) {
+            console.warn('Failed to update upvotedBy:', await upvotedByResult.text());
+        }
+
+        // Update downvotedBy array
+        const downvotedByResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ downvotedBy: JSON.stringify(post.downvotedBy) }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!downvotedByResult.ok) {
+            console.warn('Failed to update downvotedBy:', await downvotedByResult.text());
+        }
+    }
+
+    public async downvotePost(postId: string): Promise<void> {
+        if (!this.authService.isAuthorized()) {
+            throw new Error('User must be logged in to vote on posts');
+        }
+        const username = this.authService.getUserName();
+        if (!username) {
+            throw new Error('Username not found');
+        }
+
+        // Get the current post
+        const post = await this.getBlogPostById(postId);
+        
+        // Initialize vote tracking arrays if they don't exist
+        if (!post.upvotedBy) {
+            post.upvotedBy = [];
+        }
+        if (!post.downvotedBy) {
+            post.downvotedBy = [];
+        }
+        if (post.upvotes === undefined) {
+            post.upvotes = 0;
+        }
+        if (post.downvotes === undefined) {
+            post.downvotes = 0;
+        }
+
+        // Check if user already downvoted
+        const alreadyDownvoted = post.downvotedBy.includes(username);
+        // Check if user already upvoted
+        const alreadyUpvoted = post.upvotedBy.includes(username);
+
+        if (alreadyDownvoted) {
+            // Remove downvote (toggle off)
+            post.downvotedBy = post.downvotedBy.filter(u => u !== username);
+            post.downvotes = Math.max(0, (post.downvotes || 0) - 1);
+        } else {
+            // Add downvote
+            post.downvotedBy.push(username);
+            post.downvotes = (post.downvotes || 0) + 1;
+            
+            // If user previously upvoted, remove that upvote
+            if (alreadyUpvoted) {
+                post.upvotedBy = post.upvotedBy.filter(u => u !== username);
+                post.upvotes = Math.max(0, (post.upvotes || 0) - 1);
+            }
+        }
+
+        // Update the post with modified vote data
+        // Update upvotes count
+        const upvotesResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ upvotes: post.upvotes.toString() }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!upvotesResult.ok) {
+            console.warn('Failed to update upvotes:', await upvotesResult.text());
+        }
+
+        // Update downvotes count
+        const downvotesResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ downvotes: post.downvotes.toString() }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!downvotesResult.ok) {
+            console.warn('Failed to update downvotes:', await downvotesResult.text());
+        }
+
+        // Update upvotedBy array
+        const upvotedByResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ upvotedBy: JSON.stringify(post.upvotedBy) }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!upvotedByResult.ok) {
+            console.warn('Failed to update upvotedBy:', await upvotedByResult.text());
+        }
+
+        // Update downvotedBy array
+        const downvotedByResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ downvotedBy: JSON.stringify(post.downvotedBy) }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!downvotedByResult.ok) {
+            console.warn('Failed to update downvotedBy:', await downvotedByResult.text());
+        }
+    }
+
+    public async upvoteComment(postId: string, commentId: string): Promise<void> {
+        if (!this.authService.isAuthorized()) {
+            throw new Error('User must be logged in to vote on comments');
+        }
+        const username = this.authService.getUserName();
+        if (!username) {
+            throw new Error('Username not found');
+        }
+
+        // Get the current post
+        const post = await this.getBlogPostById(postId);
+        
+        if (!post.comments) {
+            throw new Error('Comments not found');
+        }
+
+        // Find the comment
+        const commentIndex = post.comments.findIndex(c => c.id === commentId);
+        if (commentIndex === -1) {
+            throw new Error('Comment not found');
+        }
+
+        const comment = post.comments[commentIndex];
+        
+        // Initialize vote tracking arrays if they don't exist
+        if (!comment.upvotedBy) {
+            comment.upvotedBy = [];
+        }
+        if (!comment.downvotedBy) {
+            comment.downvotedBy = [];
+        }
+        if (comment.upvotes === undefined) {
+            comment.upvotes = 0;
+        }
+        if (comment.downvotes === undefined) {
+            comment.downvotes = 0;
+        }
+
+        // Check if user already upvoted
+        const alreadyUpvoted = comment.upvotedBy.includes(username);
+        // Check if user already downvoted
+        const alreadyDownvoted = comment.downvotedBy.includes(username);
+
+        if (alreadyUpvoted) {
+            // Remove upvote (toggle off)
+            comment.upvotedBy = comment.upvotedBy.filter(u => u !== username);
+            comment.upvotes = Math.max(0, (comment.upvotes || 0) - 1);
+        } else {
+            // Add upvote
+            comment.upvotedBy.push(username);
+            comment.upvotes = (comment.upvotes || 0) + 1;
+            
+            // If user previously downvoted, remove that downvote
+            if (alreadyDownvoted) {
+                comment.downvotedBy = comment.downvotedBy.filter(u => u !== username);
+                comment.downvotes = Math.max(0, (comment.downvotes || 0) - 1);
+            }
+        }
+
+        // Update the post with modified comments
+        const commentsJson = JSON.stringify(post.comments);
+        
+        const updateResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ comments: commentsJson }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!updateResult.ok) {
+            const errorText = await updateResult.text();
+            throw new Error(`Failed to upvote comment: ${errorText}`);
+        }
+    }
+
+    public async downvoteComment(postId: string, commentId: string): Promise<void> {
+        if (!this.authService.isAuthorized()) {
+            throw new Error('User must be logged in to vote on comments');
+        }
+        const username = this.authService.getUserName();
+        if (!username) {
+            throw new Error('Username not found');
+        }
+
+        // Get the current post
+        const post = await this.getBlogPostById(postId);
+        
+        if (!post.comments) {
+            throw new Error('Comments not found');
+        }
+
+        // Find the comment
+        const commentIndex = post.comments.findIndex(c => c.id === commentId);
+        if (commentIndex === -1) {
+            throw new Error('Comment not found');
+        }
+
+        const comment = post.comments[commentIndex];
+        
+        // Initialize vote tracking arrays if they don't exist
+        if (!comment.upvotedBy) {
+            comment.upvotedBy = [];
+        }
+        if (!comment.downvotedBy) {
+            comment.downvotedBy = [];
+        }
+        if (comment.upvotes === undefined) {
+            comment.upvotes = 0;
+        }
+        if (comment.downvotes === undefined) {
+            comment.downvotes = 0;
+        }
+
+        // Check if user already downvoted
+        const alreadyDownvoted = comment.downvotedBy.includes(username);
+        // Check if user already upvoted
+        const alreadyUpvoted = comment.upvotedBy.includes(username);
+
+        if (alreadyDownvoted) {
+            // Remove downvote (toggle off)
+            comment.downvotedBy = comment.downvotedBy.filter(u => u !== username);
+            comment.downvotes = Math.max(0, (comment.downvotes || 0) - 1);
+        } else {
+            // Add downvote
+            comment.downvotedBy.push(username);
+            comment.downvotes = (comment.downvotes || 0) + 1;
+            
+            // If user previously upvoted, remove that upvote
+            if (alreadyUpvoted) {
+                comment.upvotedBy = comment.upvotedBy.filter(u => u !== username);
+                comment.upvotes = Math.max(0, (comment.upvotes || 0) - 1);
+            }
+        }
+
+        // Update the post with modified comments
+        const commentsJson = JSON.stringify(post.comments);
+        
+        const updateResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ comments: commentsJson }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!updateResult.ok) {
+            const errorText = await updateResult.text();
+            throw new Error(`Failed to downvote comment: ${errorText}`);
+        }
     }
 
 
@@ -189,6 +595,11 @@ export class DataService {
         blogPost.content = content;
         blogPost.isPublic = isPublic;
         blogPost.authorId = username;  // Store the author's username
+        // Initialize vote fields
+        blogPost.upvotes = 0;
+        blogPost.downvotes = 0;
+        blogPost.upvotedBy = [];
+        blogPost.downvotedBy = [];
         
         // Ensure we never send an 'id' field - backend must generate it
         if (blogPost.id) {
@@ -447,7 +858,12 @@ export class DataService {
                         post.comments = [];
                     }
                 }
-                return post;
+                // Initialize vote fields for comments
+                if (post.comments) {
+                    post.comments = initializeCommentVotes(post.comments);
+                }
+                // Initialize vote fields for post
+                return initializePostVotes(post);
             });
     }
 
@@ -562,7 +978,7 @@ export class DataService {
             throw new Error('User must be logged in to delete posts');
         }
 
-        // Note: Backend delete requires admin access, but we'll attempt it
+        // Backend now allows deletion if user is admin OR the author of the post
         const deleteResult = await fetch(`${coursesUrl}?id=${postId}`, {
             method: 'DELETE',
             headers: {
@@ -573,9 +989,9 @@ export class DataService {
 
         if (!deleteResult.ok) {
             const errorText = await deleteResult.text();
-            // If it's a 401, it means the user doesn't have admin access
-            if (deleteResult.status === 401) {
-                throw new Error('You do not have permission to delete posts. Admin access required.');
+            // If it's a 401/403, it means the user doesn't have permission
+            if (deleteResult.status === 401 || deleteResult.status === 403) {
+                throw new Error('You do not have permission to delete this post. Only the author or an admin can delete posts.');
             }
             throw new Error(`Failed to delete post: ${errorText}`);
         }
@@ -622,7 +1038,12 @@ export class DataService {
                         post.comments = [];
                     }
                 }
-                return post;
+                // Initialize vote fields for comments
+                if (post.comments) {
+                    post.comments = initializeCommentVotes(post.comments);
+                }
+                // Initialize vote fields for post
+                return initializePostVotes(post);
             });
     }
 

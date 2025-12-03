@@ -4,6 +4,109 @@ import { DataService } from "../services/DataService";
 import { CourseEntry, Comment } from "./model/model";
 import './BlogPostDetail.css';
 
+interface CommentItemProps {
+  comment: Comment;
+  postId: string;
+  dataService: DataService;
+  onVote: () => void;
+}
+
+function CommentItem({ comment, postId, dataService, onVote }: CommentItemProps) {
+  const [voting, setVoting] = useState<boolean>(false);
+  const [voteError, setVoteError] = useState<string>("");
+  
+  const username = dataService.isAuthorized() 
+    ? (dataService as any).authService?.getUserName() 
+    : null;
+
+  const hasUpvoted = username && comment.upvotedBy?.includes(username);
+  const hasDownvoted = username && comment.downvotedBy?.includes(username);
+  const upvotes = comment.upvotes || 0;
+  const downvotes = comment.downvotes || 0;
+  const netScore = upvotes - downvotes;
+
+  const handleUpvote = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!dataService.isAuthorized()) {
+      setVoteError("Please login to vote");
+      return;
+    }
+    
+    try {
+      setVoting(true);
+      setVoteError("");
+      await dataService.upvoteComment(postId, comment.id);
+      onVote();
+    } catch (err: any) {
+      setVoteError(err.message || "Failed to upvote");
+      console.error("Error upvoting:", err);
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  const handleDownvote = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!dataService.isAuthorized()) {
+      setVoteError("Please login to vote");
+      return;
+    }
+    
+    try {
+      setVoting(true);
+      setVoteError("");
+      await dataService.downvoteComment(postId, comment.id);
+      onVote();
+    } catch (err: any) {
+      setVoteError(err.message || "Failed to downvote");
+      console.error("Error downvoting:", err);
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  return (
+    <div className="comment">
+      <div className="commentHeader">
+        <strong>{comment.author}</strong>
+        {comment.createdAt && (
+          <span className="commentDate">
+            {new Date(comment.createdAt).toLocaleDateString()}
+          </span>
+        )}
+      </div>
+      <div className="commentContent">{comment.content}</div>
+      
+      <div className="commentVoting">
+        <div className="voteButtons">
+          <button
+            onClick={handleUpvote}
+            disabled={voting || !dataService.isAuthorized()}
+            className={`voteButton upvoteButton ${hasUpvoted ? 'active' : ''}`}
+            title="Upvote"
+            aria-label="Upvote comment"
+          >
+            ▲
+          </button>
+          <span className="voteScore" title={`${upvotes} upvotes, ${downvotes} downvotes`}>
+            {netScore > 0 ? '+' : ''}{netScore}
+          </span>
+          <button
+            onClick={handleDownvote}
+            disabled={voting || !dataService.isAuthorized()}
+            className={`voteButton downvoteButton ${hasDownvoted ? 'active' : ''}`}
+            title="Downvote"
+            aria-label="Downvote comment"
+          >
+            ▼
+          </button>
+        </div>
+        {voteError && <span className="voteError">{voteError}</span>}
+      </div>
+    </div>
+  );
+}
+
 interface BlogPostDetailProps {
   dataService: DataService;
 }
@@ -19,6 +122,7 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
   const [commentError, setCommentError] = useState<string>("");
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
+  const [voting, setVoting] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -141,7 +245,57 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
       
       <article className="blogPostContent">
         <div className="postHeader">
-          <h1>{post.title || post.course_name}</h1>
+          <div className="postTitleSection">
+            <h1>{post.title || post.course_name}</h1>
+            {/* Post Voting */}
+            <div className="postVotingDetail">
+              <button
+                onClick={async () => {
+                  if (!dataService.isAuthorized()) return;
+                  try {
+                    setVoting(true);
+                    await dataService.upvotePost(id!);
+                    const updatedPost = await dataService.getBlogPostById(id!);
+                    setPost(updatedPost);
+                  } catch (err: any) {
+                    console.error("Error upvoting:", err);
+                  } finally {
+                    setVoting(false);
+                  }
+                }}
+                disabled={voting || !dataService.isAuthorized()}
+                className={`voteButton upvoteButton ${post.upvotedBy?.includes((dataService as any).authService?.getUserName() || '') ? 'active' : ''}`}
+                title="Upvote"
+                aria-label="Upvote post"
+              >
+                ▲
+              </button>
+              <span className="voteScore" title={`${post.upvotes ?? 0} upvotes, ${post.downvotes ?? 0} downvotes`}>
+                {((post.upvotes ?? 0) - (post.downvotes ?? 0)) > 0 ? '+' : ''}{(post.upvotes ?? 0) - (post.downvotes ?? 0)}
+              </span>
+              <button
+                onClick={async () => {
+                  if (!dataService.isAuthorized()) return;
+                  try {
+                    setVoting(true);
+                    await dataService.downvotePost(id!);
+                    const updatedPost = await dataService.getBlogPostById(id!);
+                    setPost(updatedPost);
+                  } catch (err: any) {
+                    console.error("Error downvoting:", err);
+                  } finally {
+                    setVoting(false);
+                  }
+                }}
+                disabled={voting || !dataService.isAuthorized()}
+                className={`voteButton downvoteButton ${post.downvotedBy?.includes((dataService as any).authService?.getUserName() || '') ? 'active' : ''}`}
+                title="Downvote"
+                aria-label="Downvote post"
+              >
+                ▼
+              </button>
+            </div>
+          </div>
           {isOwner && (
             <div className="postActions">
               <button 
@@ -221,17 +375,20 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
         <div className="commentsList">
           {post.comments && post.comments.length > 0 ? (
             post.comments.map((comment: Comment) => (
-              <div key={comment.id} className="comment">
-                <div className="commentHeader">
-                  <strong>{comment.author}</strong>
-                  {comment.createdAt && (
-                    <span className="commentDate">
-                      {new Date(comment.createdAt).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-                <div className="commentContent">{comment.content}</div>
-              </div>
+              <CommentItem 
+                key={comment.id} 
+                comment={comment} 
+                postId={id!}
+                dataService={dataService}
+                onVote={() => {
+                  // Refresh the post to get updated vote counts
+                  dataService.getBlogPostById(id!).then(updatedPost => {
+                    setPost(updatedPost);
+                  }).catch(err => {
+                    console.error('Error refreshing post after vote:', err);
+                  });
+                }}
+              />
             ))
           ) : (
             <p className="noComments">No comments yet. Be the first to comment!</p>

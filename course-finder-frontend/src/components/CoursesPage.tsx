@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DataService } from "../services/DataService";
 import { CourseEntry } from "./model/model";
 import BlogPostComponent from "./BlogPostComponent";
+import './CoursesPage.css';
 
 interface CoursesPageProps {
   dataService: DataService;
@@ -11,6 +12,7 @@ export default function CoursesPage({ dataService }: CoursesPageProps) {
   const [posts, setPosts] = useState<CourseEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -29,9 +31,48 @@ export default function CoursesPage({ dataService }: CoursesPageProps) {
     fetchPosts();
   }, [dataService]);
 
+  // Filter and sort posts based on search query and upvotes
+  const filteredPosts = useMemo(() => {
+    let result = posts;
+    
+    // Filter by search query if provided
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(post => {
+        const title = (post.title || post.course_name || '').toLowerCase();
+        const content = (post.content || '').toLowerCase();
+        const authorId = (post.authorId || '').toLowerCase();
+        
+        return title.includes(query) || 
+               content.includes(query) || 
+               authorId.includes(query);
+      });
+    }
+    
+    // Sort by upvotes (descending), then by downvotes (ascending)
+    // Posts with higher upvotes appear first
+    result = [...result].sort((a, b) => {
+      const aUpvotes = a.upvotes ?? 0;
+      const bUpvotes = b.upvotes ?? 0;
+      const aDownvotes = a.downvotes ?? 0;
+      const bDownvotes = b.downvotes ?? 0;
+      const aNet = aUpvotes - aDownvotes;
+      const bNet = bUpvotes - bDownvotes;
+      
+      // Sort by net score (upvotes - downvotes) descending
+      if (bNet !== aNet) {
+        return bNet - aNet;
+      }
+      // If net scores are equal, sort by upvotes descending
+      return bUpvotes - aUpvotes;
+    });
+    
+    return result;
+  }, [posts, searchQuery]);
+
   if (loading) {
     return (
-      <div>
+      <div className="coursesPageContainer">
         <h1>Blog Explorer</h1>
         <p>Loading posts...</p>
       </div>
@@ -40,7 +81,7 @@ export default function CoursesPage({ dataService }: CoursesPageProps) {
 
   if (error) {
     return (
-      <div>
+      <div className="coursesPageContainer">
         <h1>Blog Explorer</h1>
         <p style={{ color: 'red' }}>{error}</p>
       </div>
@@ -48,17 +89,53 @@ export default function CoursesPage({ dataService }: CoursesPageProps) {
   }
 
   return (
-    <div>
+    <div className="coursesPageContainer">
       <h1>Blog Explorer</h1>
       <p>See what others have been posting about.</p>
+      
+      {/* Search Bar */}
+      <div className="searchContainer">
+        <input
+          type="text"
+          placeholder="Search posts by title, content, or author..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="searchInput"
+        />
+        {searchQuery && (
+          <button 
+            onClick={() => setSearchQuery("")}
+            className="clearSearchButton"
+            aria-label="Clear search"
+          >
+            ×
+          </button>
+        )}
+      </div>
+
+      {/* Results count */}
+      {searchQuery && (
+        <div className="searchResultsInfo">
+          {filteredPosts.length === 0 ? (
+            <p>No posts found matching "{searchQuery}"</p>
+          ) : (
+            <p>Found {filteredPosts.length} {filteredPosts.length === 1 ? 'post' : 'posts'} matching "{searchQuery}"</p>
+          )}
+        </div>
+      )}
+
       {posts.length === 0 ? (
         <div>
           <p>No public blog posts available yet.</p>
         </div>
-      ) : (
+      ) : filteredPosts.length === 0 && !searchQuery ? (
         <div>
-          {posts.map((post) => (
-            <BlogPostComponent key={post.id} post={post} />
+          <p>No public blog posts available yet.</p>
+        </div>
+      ) : (
+        <div className="postsList">
+          {filteredPosts.map((post) => (
+            <BlogPostComponent key={post.id} post={post} dataService={dataService} />
           ))}
         </div>
       )}
