@@ -1,183 +1,250 @@
 .profileContainer {
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 40px 20px;
+  min-height: calc(100vh - 56px);
 }
 
 .profileContainer h1 {
-  margin-bottom: 30px;
-  color: #333;
+  margin-bottom: 32px;
+  color: var(--text-primary);
+  font-size: 32px;
+  font-weight: 700;
 }
 
 .profileSection {
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 30px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-sm);
 }
 
 .profileSection h2 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 1.3em;
+  margin: 0 0 20px 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .profilePictureSection {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
+  margin-bottom: 24px;
 }
 
 .profilePicture {
-  width: 150px;
-  height: 150px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #ddd;
+  border: 3px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.profilePicture:hover {
+  box-shadow: var(--shadow-md);
+  transform: scale(1.02);
 }
 
 .profilePicturePlaceholder {
-  width: 150px;
-  height: 150px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  background-color: #f0f0f0;
-  border: 3px solid #ddd;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border: 3px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
-  font-size: 0.9em;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .profileForm {
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 30px;
-  margin-bottom: 30px;
+  margin-top: 32px;
 }
 
 .formGroup {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .formGroup label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 14px;
 }
 
 .disabledInput {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  border: 1px solid var(--border-color);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #f5f5f5;
-  color: #666;
-  font-size: 1em;
 }
 
 .biographyInput {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
   font-family: inherit;
-  font-size: 1em;
+  font-size: 14px;
   resize: vertical;
-  min-height: 120px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: var(--transition);
 }
 
 .biographyInput:focus {
   outline: none;
-  border-color: #4a90e2;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(82, 158, 204, 0.1);
+}
+
+.biographyInput::placeholder {
+  color: var(--text-secondary);
 }
 
 .fileInput {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1em;
-  margin-bottom: 5px;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.fileInput:hover {
+  border-color: var(--primary-color);
+}
+
+.fileInput::file-selector-button {
+  padding: 8px 16px;
+  margin-right: 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.fileInput::file-selector-button:hover {
+  background: var(--primary-hover);
 }
 
 .formGroup small {
   display: block;
-  color: #666;
-  font-size: 0.85em;
-  margin-top: 5px;
-}
-
-.saveButton {
-  background-color: #4a90e2;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1em;
-  font-weight: 600;
-  margin-top: 10px;
-}
-
-.saveButton:hover:not(:disabled) {
-  background-color: #357abd;
-}
-
-.saveButton:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
 }
 
 .errorMessage {
-  background-color: #fee;
-  color: #c33;
-  padding: 12px;
-  border-radius: 4px;
-  margin: 15px 0;
-  border: 1px solid #fcc;
+  background-color: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: 14px;
+  border-left: 3px solid #e74c3c;
 }
 
 .successMessage {
-  background-color: #efe;
-  color: #3c3;
-  padding: 12px;
-  border-radius: 4px;
-  margin: 15px 0;
-  border: 1px solid #cfc;
+  background-color: rgba(0, 168, 107, 0.1);
+  color: var(--secondary-color);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: 14px;
+  border-left: 3px solid var(--secondary-color);
+}
+
+.saveButton {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: var(--transition);
+  width: 100%;
+  margin-top: 8px;
+}
+
+.saveButton:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.saveButton:disabled {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
 }
 
 .profileActions {
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 20px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 32px;
+  box-shadow: var(--shadow-sm);
 }
 
 .profileActions h2 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 1.3em;
-}
-
-.viewPostsButton {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1em;
+  margin: 0 0 20px 0;
+  color: var(--text-primary);
+  font-size: 20px;
   font-weight: 600;
 }
 
-.viewPostsButton:hover {
-  background-color: #218838;
+.viewPostsButton {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: var(--transition);
+  width: 100%;
 }
 
+.viewPostsButton:hover {
+  background-color: #008a56;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
 
+/* Responsive */
+@media (max-width: 768px) {
+  .profileContainer {
+    padding: 24px 16px;
+  }
 
+  .profileSection {
+    padding: 24px;
+  }
 
+  .profilePictureSection {
+    flex-direction: column;
+    text-align: center;
+  }
+}
