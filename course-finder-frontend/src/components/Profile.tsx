@@ -1,5 +1,5 @@
 import { useState, useEffect, SyntheticEvent } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { DataService } from "../services/DataService";
 import { UserProfile } from "./model/model";
 import './Profile.css';
@@ -14,6 +14,7 @@ type CustomEvent = {
 
 export default function Profile({ dataService }: ProfileProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [biography, setBiography] = useState<string>("");
   const [profilePicture, setProfilePicture] = useState<File | undefined>();
@@ -31,6 +32,11 @@ export default function Profile({ dataService }: ProfileProps) {
         return;
       }
       try {
+        // Reset state when loading
+        setError("");
+        setSuccess("");
+        setProfilePicture(undefined);
+        
         // Get username
         const authService = (dataService as any).authService;
         if (authService) {
@@ -44,16 +50,28 @@ export default function Profile({ dataService }: ProfileProps) {
         if (userProfile) {
           setProfile(userProfile);
           setBiography(userProfile.biography || "");
-          setProfilePictureUrl(userProfile.profilePictureUrl || "");
+          // Only set profile picture URL if it's a valid S3 URL (not a blob)
+          // Clear any blob URLs that might be lingering
+          if (userProfile.profilePictureUrl && !userProfile.profilePictureUrl.startsWith('blob:')) {
+            setProfilePictureUrl(userProfile.profilePictureUrl);
+          } else {
+            setProfilePictureUrl("");
+          }
+        } else {
+          // Profile doesn't exist yet - reset to empty state
+          setProfile(null);
+          setBiography("");
+          setProfilePictureUrl("");
         }
       } catch (err) {
         console.error("Error loading profile:", err);
+        setError("Failed to load profile. Please try again.");
       } finally {
         setLoading(false);
       }
     };
     loadProfile();
-  }, [dataService]);
+  }, [dataService, location.pathname]); // Reload when navigating to this page
 
   const handleFileChange = (event: CustomEvent) => {
     if (event.target.files && event.target.files[0]) {
@@ -85,9 +103,17 @@ export default function Profile({ dataService }: ProfileProps) {
         } catch (uploadErr: any) {
           throw new Error(`Failed to upload profile picture: ${uploadErr.message}`);
         }
-      } else if (profilePictureUrl && !profilePictureUrl.startsWith('blob:')) {
-        // Keep existing profile picture URL if it's not a blob URL (preview)
-        finalProfilePictureUrl = profilePictureUrl;
+      } else {
+        // No new picture selected - preserve existing one
+        if (profile && profile.profilePictureUrl) {
+          // Use the existing profile picture URL from the database
+          finalProfilePictureUrl = profile.profilePictureUrl;
+        } else if (profilePictureUrl && !profilePictureUrl.startsWith('blob:')) {
+          // Use the current state if it's not a blob URL
+          finalProfilePictureUrl = profilePictureUrl;
+        }
+        // If profilePictureUrl is a blob URL and we don't have a saved one, 
+        // finalProfilePictureUrl will be undefined, which means we won't update it
       }
 
       // Save profile
@@ -96,10 +122,14 @@ export default function Profile({ dataService }: ProfileProps) {
       setSuccess("Profile updated successfully!");
       setProfilePicture(undefined); // Clear file input
       
+      // Small delay to ensure backend has processed the updates
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Reload profile to get updated data
       const updatedProfile = await dataService.getUserProfile();
       if (updatedProfile) {
         setProfile(updatedProfile);
+        setBiography(updatedProfile.biography || "");
         // Use the server URL, not the blob preview
         if (updatedProfile.profilePictureUrl) {
           setProfilePictureUrl(updatedProfile.profilePictureUrl);
@@ -109,8 +139,12 @@ export default function Profile({ dataService }: ProfileProps) {
           setProfilePictureUrl("");
         }
       } else {
-        // If profile doesn't exist yet, clear blob URLs
-        if (profilePictureUrl && profilePictureUrl.startsWith('blob:')) {
+        // If profile doesn't exist yet, use what we just saved
+        setBiography(biography);
+        if (finalProfilePictureUrl && !finalProfilePictureUrl.startsWith('blob:')) {
+          setProfilePictureUrl(finalProfilePictureUrl);
+        } else if (profilePictureUrl && profilePictureUrl.startsWith('blob:')) {
+          // Clear blob URL if we don't have a saved one
           setProfilePictureUrl("");
         }
       }
@@ -162,7 +196,7 @@ export default function Profile({ dataService }: ProfileProps) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="profileForm">
+      <form onSubmit={handleSubmit} className="profileForm" noValidate>
         <div className="formGroup">
           <label>Username</label>
           <input 

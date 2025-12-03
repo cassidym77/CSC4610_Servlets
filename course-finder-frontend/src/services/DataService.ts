@@ -271,7 +271,16 @@ export class DataService {
             });
             if (getProfileResult.ok) {
                 const profile = await getProfileResult.json();
-                return profile as UserProfile;
+                // Ensure all fields are properly set and return a clean UserProfile object
+                const userProfile: UserProfile = {
+                    id: profile.id || profileId,
+                    course_code: profile.course_code || 'PROFILE',
+                    course_name: profile.course_name || username,
+                    biography: profile.biography || '',
+                    profilePictureUrl: profile.profilePictureUrl || undefined,
+                    username: profile.username || username
+                };
+                return userProfile;
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
@@ -294,7 +303,7 @@ export class DataService {
         
         if (existingProfile) {
             // Update existing profile - Update one field at a time (backend limitation)
-            // Update biography
+            // Always update biography (even if empty, to clear it if needed)
             const biographyUpdateResult = await fetch(`${coursesUrl}?id=${profileId}`, {
                 method: 'PUT',
                 body: JSON.stringify({ biography: biography || '' }),
@@ -308,8 +317,10 @@ export class DataService {
                 throw new Error(`Failed to update biography: ${errorText}`);
             }
             
+            // Update profile picture URL if provided
             // Update profile picture URL if provided (and it's not a blob URL)
-            if (profilePictureUrl && !profilePictureUrl.startsWith('blob:')) {
+            // Only update if we have a valid URL to save
+            if (profilePictureUrl !== undefined && profilePictureUrl && !profilePictureUrl.startsWith('blob:')) {
                 const pictureUpdateResult = await fetch(`${coursesUrl}?id=${profileId}`, {
                     method: 'PUT',
                     body: JSON.stringify({ profilePictureUrl: profilePictureUrl }),
@@ -320,9 +331,12 @@ export class DataService {
                 });
                 if (!pictureUpdateResult.ok) {
                     const errorText = await pictureUpdateResult.text();
-                    throw new Error(`Failed to update profile picture: ${errorText}`);
+                    // Log warning but don't fail the entire save operation
+                    console.warn(`Failed to update profile picture: ${errorText}`);
                 }
             }
+            // If profilePictureUrl is undefined or a blob URL, we don't update it
+            // This preserves the existing profile picture URL
         } else {
             // Create new profile
             const profile: UserProfile = {
