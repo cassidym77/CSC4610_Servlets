@@ -548,7 +548,7 @@ export class DataService {
             throw new Error('User must be logged in to delete posts');
         }
 
-        // Note: Backend delete requires admin access, but we'll attempt it
+        // Backend now allows deletion if user is admin OR the author of the post
         const deleteResult = await fetch(`${coursesUrl}?id=${postId}`, {
             method: 'DELETE',
             headers: {
@@ -559,9 +559,9 @@ export class DataService {
 
         if (!deleteResult.ok) {
             const errorText = await deleteResult.text();
-            // If it's a 401, it means the user doesn't have admin access
-            if (deleteResult.status === 401) {
-                throw new Error('You do not have permission to delete posts. Admin access required.');
+            // If it's a 401/403, it means the user doesn't have permission
+            if (deleteResult.status === 401 || deleteResult.status === 403) {
+                throw new Error('You do not have permission to delete this post. Only the author or an admin can delete posts.');
             }
             throw new Error(`Failed to delete post: ${errorText}`);
         }
