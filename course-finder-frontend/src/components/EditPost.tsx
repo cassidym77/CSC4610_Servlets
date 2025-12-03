@@ -142,14 +142,17 @@ export default function EditPost({ dataService }: EditPostProps) {
         </div>
 
         <div className="formGroup">
-          <label>
+          <div className="checkboxGroup">
             <input 
               type="checkbox"
               checked={isPublic}
               onChange={(e) => setIsPublic(e.target.checked)}
+              id="isPublic"
             />
-            Make this post public (visible to other users)
-          </label>
+            <label htmlFor="isPublic">
+              Make this post public (visible to other users)
+            </label>
+          </div>
         </div>
 
         {error && <div className="errorMessage">{error}</div>}
