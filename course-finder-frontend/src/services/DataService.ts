@@ -5,6 +5,19 @@ import { CourseEntry, UserProfile } from "../components/model/model";
 
 const coursesUrl = ApiStack.CoursesApiEndpoint75C265A0 + 'courses'
 
+// Helper function to initialize vote fields for comments (backward compatibility)
+function initializeCommentVotes(comments: any[]): any[] {
+    if (!Array.isArray(comments)) {
+        return [];
+    }
+    return comments.map(comment => ({
+        ...comment,
+        upvotes: comment.upvotes ?? 0,
+        downvotes: comment.downvotes ?? 0,
+        upvotedBy: comment.upvotedBy ?? [],
+        downvotedBy: comment.downvotedBy ?? []
+    }));
+}
 
 export class DataService {
 
@@ -95,6 +108,11 @@ export class DataService {
             }
         }
         
+        // Initialize vote fields for comments
+        if (post.comments) {
+            post.comments = initializeCommentVotes(post.comments);
+        }
+        
         return post;
     }
 
@@ -108,7 +126,11 @@ export class DataService {
             postId: postId,
             author: this.authService.getUserName() || 'Anonymous',
             content: content,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            upvotes: 0,
+            downvotes: 0,
+            upvotedBy: [],
+            downvotedBy: []
         };
 
         // Add comment to post's comments array
@@ -137,6 +159,160 @@ export class DataService {
         }
         
         return comment.id;
+    }
+
+    public async upvoteComment(postId: string, commentId: string): Promise<void> {
+        if (!this.authService.isAuthorized()) {
+            throw new Error('User must be logged in to vote on comments');
+        }
+        const username = this.authService.getUserName();
+        if (!username) {
+            throw new Error('Username not found');
+        }
+
+        // Get the current post
+        const post = await this.getBlogPostById(postId);
+        
+        if (!post.comments) {
+            throw new Error('Comments not found');
+        }
+
+        // Find the comment
+        const commentIndex = post.comments.findIndex(c => c.id === commentId);
+        if (commentIndex === -1) {
+            throw new Error('Comment not found');
+        }
+
+        const comment = post.comments[commentIndex];
+        
+        // Initialize vote tracking arrays if they don't exist
+        if (!comment.upvotedBy) {
+            comment.upvotedBy = [];
+        }
+        if (!comment.downvotedBy) {
+            comment.downvotedBy = [];
+        }
+        if (comment.upvotes === undefined) {
+            comment.upvotes = 0;
+        }
+        if (comment.downvotes === undefined) {
+            comment.downvotes = 0;
+        }
+
+        // Check if user already upvoted
+        const alreadyUpvoted = comment.upvotedBy.includes(username);
+        // Check if user already downvoted
+        const alreadyDownvoted = comment.downvotedBy.includes(username);
+
+        if (alreadyUpvoted) {
+            // Remove upvote (toggle off)
+            comment.upvotedBy = comment.upvotedBy.filter(u => u !== username);
+            comment.upvotes = Math.max(0, (comment.upvotes || 0) - 1);
+        } else {
+            // Add upvote
+            comment.upvotedBy.push(username);
+            comment.upvotes = (comment.upvotes || 0) + 1;
+            
+            // If user previously downvoted, remove that downvote
+            if (alreadyDownvoted) {
+                comment.downvotedBy = comment.downvotedBy.filter(u => u !== username);
+                comment.downvotes = Math.max(0, (comment.downvotes || 0) - 1);
+            }
+        }
+
+        // Update the post with modified comments
+        const commentsJson = JSON.stringify(post.comments);
+        
+        const updateResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ comments: commentsJson }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!updateResult.ok) {
+            const errorText = await updateResult.text();
+            throw new Error(`Failed to upvote comment: ${errorText}`);
+        }
+    }
+
+    public async downvoteComment(postId: string, commentId: string): Promise<void> {
+        if (!this.authService.isAuthorized()) {
+            throw new Error('User must be logged in to vote on comments');
+        }
+        const username = this.authService.getUserName();
+        if (!username) {
+            throw new Error('Username not found');
+        }
+
+        // Get the current post
+        const post = await this.getBlogPostById(postId);
+        
+        if (!post.comments) {
+            throw new Error('Comments not found');
+        }
+
+        // Find the comment
+        const commentIndex = post.comments.findIndex(c => c.id === commentId);
+        if (commentIndex === -1) {
+            throw new Error('Comment not found');
+        }
+
+        const comment = post.comments[commentIndex];
+        
+        // Initialize vote tracking arrays if they don't exist
+        if (!comment.upvotedBy) {
+            comment.upvotedBy = [];
+        }
+        if (!comment.downvotedBy) {
+            comment.downvotedBy = [];
+        }
+        if (comment.upvotes === undefined) {
+            comment.upvotes = 0;
+        }
+        if (comment.downvotes === undefined) {
+            comment.downvotes = 0;
+        }
+
+        // Check if user already downvoted
+        const alreadyDownvoted = comment.downvotedBy.includes(username);
+        // Check if user already upvoted
+        const alreadyUpvoted = comment.upvotedBy.includes(username);
+
+        if (alreadyDownvoted) {
+            // Remove downvote (toggle off)
+            comment.downvotedBy = comment.downvotedBy.filter(u => u !== username);
+            comment.downvotes = Math.max(0, (comment.downvotes || 0) - 1);
+        } else {
+            // Add downvote
+            comment.downvotedBy.push(username);
+            comment.downvotes = (comment.downvotes || 0) + 1;
+            
+            // If user previously upvoted, remove that upvote
+            if (alreadyUpvoted) {
+                comment.upvotedBy = comment.upvotedBy.filter(u => u !== username);
+                comment.upvotes = Math.max(0, (comment.upvotes || 0) - 1);
+            }
+        }
+
+        // Update the post with modified comments
+        const commentsJson = JSON.stringify(post.comments);
+        
+        const updateResult = await fetch(`${coursesUrl}?id=${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ comments: commentsJson }),
+            headers: {
+                'Authorization': this.authService.jwtToken!,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!updateResult.ok) {
+            const errorText = await updateResult.text();
+            throw new Error(`Failed to downvote comment: ${errorText}`);
+        }
     }
 
 
@@ -433,6 +609,10 @@ export class DataService {
                         post.comments = [];
                     }
                 }
+                // Initialize vote fields for comments
+                if (post.comments) {
+                    post.comments = initializeCommentVotes(post.comments);
+                }
                 return post;
             });
     }
@@ -607,6 +787,10 @@ export class DataService {
                         console.error('Error parsing comments:', e);
                         post.comments = [];
                     }
+                }
+                // Initialize vote fields for comments
+                if (post.comments) {
+                    post.comments = initializeCommentVotes(post.comments);
                 }
                 return post;
             });
