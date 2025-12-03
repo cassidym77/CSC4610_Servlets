@@ -160,6 +160,14 @@ export class DataService {
     }
 
     public async createBlogPost(title: string, content: string, isPublic: boolean){
+        if (!this.authService.isAuthorized()) {
+            throw new Error('User must be logged in to create posts');
+        }
+        const username = this.authService.getUserName();
+        if (!username) {
+            throw new Error('Username not found');
+        }
+        
         // Map blog post fields to course entry structure for backend compatibility
         // The backend validation requires course_code and course_name
         // IMPORTANT: Do NOT include 'id' field - backend will generate a unique ID
@@ -180,6 +188,7 @@ export class DataService {
         blogPost.title = title;
         blogPost.content = content;
         blogPost.isPublic = isPublic;
+        blogPost.authorId = username;  // Store the author's username
         
         // Ensure we never send an 'id' field - backend must generate it
         if (blogPost.id) {
@@ -202,6 +211,23 @@ export class DataService {
         if (!postResultJSON.id) {
             throw new Error('Backend did not return a post ID');
         }
+        
+        // After creation, update the authorId field to ensure it's stored
+        // (in case the backend doesn't preserve it from the initial POST)
+        try {
+            await fetch(`${coursesUrl}?id=${postResultJSON.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ authorId: username }),
+                headers: {
+                    'Authorization': this.authService.jwtToken!,
+                    'Content-Type': 'application/json'
+                }
+            });
+        } catch (err) {
+            console.warn('Failed to set authorId after post creation:', err);
+            // Non-critical, continue anyway
+        }
+        
         return postResultJSON.id
     }
 
@@ -368,8 +394,8 @@ export class DataService {
         });
         const allPosts: CourseEntry[] = await getPostsResult.json();
         
-        // Filter for private blog posts (has title/content and isPublic is false)
-        // Also parse comments if stored as JSON string
+        // Filter for private blog posts owned by the current user
+        // Use authorId if available, otherwise fall back to isPublic check
         return allPosts
             .filter(post => {
                 // Ensure post has required fields and is not a profile
@@ -381,7 +407,17 @@ export class DataService {
                 if (typeof isPublic === 'string') {
                     isPublic = isPublic === 'true' || isPublic === 'True';
                 }
-                return isPublic === false;
+                // Must be private
+                if (isPublic !== false) {
+                    return false;
+                }
+                // If authorId exists, use it for filtering (more reliable)
+                if (post.authorId) {
+                    return post.authorId === username;
+                }
+                // Fallback: if no authorId, include it (for backward compatibility with old posts)
+                // In practice, all new posts will have authorId
+                return true;
             })
             .map(post => {
                 // Parse isPublic if it's stored as a string
@@ -411,6 +447,10 @@ export class DataService {
         if (!currentPost || !currentPost.id) {
             throw new Error('Post not found or invalid');
         }
+
+        // Preserve authorId if it exists, or set it if it doesn't
+        const username = this.authService.getUserName();
+        const authorId = currentPost.authorId || username;
 
         // Ensure we preserve the original ID - never update it
         // Update title (mapped to course_name) - required by backend
@@ -485,6 +525,21 @@ export class DataService {
             console.warn('Failed to update course_code:', await codeResult.text());
         }
 
+        // Ensure authorId is set (preserve existing or set to current user)
+        if (authorId) {
+            const authorIdResult = await fetch(`${coursesUrl}?id=${postId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ authorId: authorId }),
+                headers: {
+                    'Authorization': this.authService.jwtToken!,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!authorIdResult.ok) {
+                console.warn('Failed to update authorId:', await authorIdResult.text());
+            }
+        }
+
         // IMPORTANT: Never update the 'id' field - it's the primary key and must remain unchanged
     }
 
@@ -512,6 +567,51 @@ export class DataService {
         }
     }
 
+    public async getUserAllPosts(): Promise<CourseEntry[]> {
+        // Get all posts created by the user (both public and private)
+        if (!this.authService.isAuthorized()) {
+            return [];
+        }
+        const username = this.authService.getUserName();
+        if (!username) {
+            return [];
+        }
+        
+        const getPostsResult = await fetch(coursesUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': this.authService.jwtToken || ''
+            }
+        });
+        const allPosts: CourseEntry[] = await getPostsResult.json();
+        
+        // Filter posts by authorId (username)
+        return allPosts
+            .filter(post => {
+                if (!post.title || !post.content || !post.id || post.id.startsWith('profile-')) {
+                    return false;
+                }
+                // Check if post belongs to current user by authorId
+                return post.authorId === username;
+            })
+            .map(post => {
+                // Parse isPublic if it's stored as a string
+                if (post.isPublic !== undefined && typeof post.isPublic === 'string') {
+                    post.isPublic = post.isPublic === 'true' || post.isPublic === 'True';
+                }
+                // Parse comments if it's stored as a JSON string
+                if (post.comments && typeof post.comments === 'string') {
+                    try {
+                        post.comments = JSON.parse(post.comments);
+                    } catch (e) {
+                        console.error('Error parsing comments:', e);
+                        post.comments = [];
+                    }
+                }
+                return post;
+            });
+    }
+
     public async isPostOwner(post: CourseEntry): Promise<boolean> {
         if (!this.authService.isAuthorized()) {
             return false;
@@ -520,20 +620,30 @@ export class DataService {
         if (!username) {
             return false;
         }
+        
+        // Check ownership using authorId field (most reliable)
+        if (post.authorId) {
+            return post.authorId === username;
+        }
+        
+        // Fallback: For older posts without authorId, check if it's in user's private posts
+        // Parse isPublic if it's a string
+        let isPublic = post.isPublic;
+        if (typeof isPublic === 'string') {
+            isPublic = isPublic === 'true' || isPublic === 'True';
+        }
+        
         // For private posts, check if it's in the user's private posts list
-        if (post.isPublic === false) {
+        // (only the author can have private posts in their list)
+        if (isPublic === false) {
             const userPrivatePosts = await this.getUserPrivatePosts();
             return userPrivatePosts.some(p => p.id === post.id);
         }
-        // For public posts, we need to check all user's posts (both public and private)
-        // Get all posts and filter for ones that belong to this user
+        
+        // For public posts without authorId, try to get all user posts
         try {
-            const allPosts = await this.getCourses();
-            // Check if this post exists in the user's posts
-            // Since we don't have an explicit author field, we'll check if it's in private posts
-            // or if we can determine ownership another way
-            const userPrivatePosts = await this.getUserPrivatePosts();
-            return userPrivatePosts.some(p => p.id === post.id);
+            const userAllPosts = await this.getUserAllPosts();
+            return userAllPosts.some(p => p.id === post.id);
         } catch (error) {
             console.error('Error checking post ownership:', error);
             return false;

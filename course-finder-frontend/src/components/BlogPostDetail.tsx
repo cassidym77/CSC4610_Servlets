@@ -32,23 +32,33 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
         setLoading(true);
         const fetchedPost = await dataService.getBlogPostById(id);
         
-        // Only show public posts or posts that belong to the user
-        if (fetchedPost.isPublic !== true) {
-          setError("This post is private and cannot be viewed.");
-          setLoading(false);
-          return;
-        }
-        
-        setPost(fetchedPost);
-        setError("");
         // Check if current user is the owner
+        let owner = false;
         try {
-          const owner = await dataService.isPostOwner(fetchedPost);
+          owner = await dataService.isPostOwner(fetchedPost);
           setIsOwner(owner);
         } catch (ownerErr) {
           console.error('Error checking ownership:', ownerErr);
           setIsOwner(false);
         }
+        
+        // Parse isPublic if it's a string
+        let isPublic = fetchedPost.isPublic;
+        if (typeof isPublic === 'string') {
+          isPublic = isPublic === 'true' || isPublic === 'True';
+        }
+        
+        // Private posts: only the author can view them
+        if (isPublic !== true && !owner) {
+          setError("This post is private and can only be viewed by the author.");
+          setLoading(false);
+          return;
+        }
+        
+        // Public posts: everyone can view them
+        // Private posts: only owner can view them (checked above)
+        setPost(fetchedPost);
+        setError("");
       } catch (err: any) {
         setError(err.message || "Failed to load blog post. Please try again later.");
         console.error("Error fetching post:", err);
@@ -163,29 +173,50 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
       <section className="commentsSection">
         <h2>Comments ({post.comments?.length || 0})</h2>
         
-        {dataService.isAuthorized() ? (
-          <form onSubmit={handleCommentSubmit} className="commentForm">
-            <textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Write a comment..."
-              rows={4}
-              className="commentInput"
-            />
-            {commentError && <p className="errorMessage">{commentError}</p>}
-            <button 
-              type="submit" 
-              disabled={submittingComment || !commentText.trim()}
-              className="submitCommentButton"
-            >
-              {submittingComment ? 'Posting...' : 'Post Comment'}
-            </button>
-          </form>
-        ) : (
-          <p>
-            <NavLink to="/login">Login</NavLink> to post a comment.
-          </p>
-        )}
+        {/* Comments are only allowed on public posts by logged-in users */}
+        {(() => {
+          // Parse isPublic if it's a string
+          let isPublic = post.isPublic;
+          if (typeof isPublic === 'string') {
+            isPublic = isPublic === 'true' || isPublic === 'True';
+          }
+          
+          // Only show comment form for public posts
+          if (isPublic === true) {
+            if (dataService.isAuthorized()) {
+              return (
+                <form onSubmit={handleCommentSubmit} className="commentForm">
+                  <textarea
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Write a comment..."
+                    rows={4}
+                    className="commentInput"
+                  />
+                  {commentError && <p className="errorMessage">{commentError}</p>}
+                  <button 
+                    type="submit" 
+                    disabled={submittingComment || !commentText.trim()}
+                    className="submitCommentButton"
+                  >
+                    {submittingComment ? 'Posting...' : 'Post Comment'}
+                  </button>
+                </form>
+              );
+            } else {
+              return (
+                <p>
+                  <NavLink to="/login">Login</NavLink> to post a comment.
+                </p>
+              );
+            }
+          } else {
+            // Private posts don't allow comments
+            return (
+              <p className="noComments">Comments are not available for private posts.</p>
+            );
+          }
+        })()}
 
         <div className="commentsList">
           {post.comments && post.comments.length > 0 ? (
