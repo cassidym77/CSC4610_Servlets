@@ -81,7 +81,7 @@
      "S3Bucket": {
       "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
      },
-     "S3Key": "2b6067fba8212d4a547e8cde519343c0a46a51b8c0638e27a53a2d5e9c1dbd70.zip"
+     "S3Key": "72c74f432b381c0d7234c25f1e004318b38a47184fb1bf7b404cb6ac121484e4.zip"
     },
     "Environment": {
      "Variables": {
@@ -109,7 +109,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "LambdaStack/CoursesLambda/Resource",
-    "aws:asset:path": "C:\\Users\\Cassidy\\OneDrive - Louisiana State University\\Desktop\\CSC4610_Servlets\\course-finder",
+    "aws:asset:path": "asset.72c74f432b381c0d7234c25f1e004318b38a47184fb1bf7b404cb6ac121484e4",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }

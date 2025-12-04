@@ -3,20 +3,20 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 
 
-export async function updateCourse(event: APIGatewayProxyEvent, ddbClient: DynamoDBClient): Promise<APIGatewayProxyResult> {
+export async function updatePost(event: APIGatewayProxyEvent, ddbClient: DynamoDBClient): Promise<APIGatewayProxyResult> {
 
 
     if(event.queryStringParameters && ('id' in event.queryStringParameters) && event.body) {
 
         const parsedBody = JSON.parse(event.body);
-        const courseId = event.queryStringParameters['id'];
+        const postId = event.queryStringParameters['id'];
         const requestBodyKey = Object.keys(parsedBody)[0];
         const requestBodyValue = parsedBody[requestBodyKey];
 
         const updateResult = await ddbClient.send(new UpdateItemCommand({
             TableName: process.env.TABLE_NAME,
             Key: {
-                'id': {S: courseId}
+                'id': {S: postId}
             },
             UpdateExpression: 'set #zzzNew = :new',
             ExpressionAttributeValues: {

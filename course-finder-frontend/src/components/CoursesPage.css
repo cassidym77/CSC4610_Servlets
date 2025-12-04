@@ -1,0 +1,128 @@
+.coursesPageContainer {
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: calc(100vh - 56px);
+}
+
+.coursesPageContainer h1 {
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.coursesPageContainer > p {
+  margin-bottom: 32px;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.searchContainer {
+  position: relative;
+  margin-bottom: 32px;
+  max-width: 600px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 14px 50px 14px 20px;
+  font-size: 15px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: var(--transition);
+  box-sizing: border-box;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.searchInput:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(82, 158, 204, 0.1);
+}
+
+.searchInput::placeholder {
+  color: var(--text-secondary);
+}
+
+.clearSearchButton {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.clearSearchButton:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.searchResultsInfo {
+  margin-bottom: 24px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.postsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.emptyState h3 {
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .coursesPageContainer {
+    padding: 24px 16px;
+  }
+  
+  .coursesPageContainer h1 {
+    font-size: 28px;
+  }
+  
+  .searchContainer {
+    max-width: 100%;
+  }
+  
+  .searchInput {
+    font-size: 14px;
+    padding: 12px 45px 12px 16px;
+  }
+
+  .postsList {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .postsList {
+    grid-template-columns: 1fr;
+  }
+}
