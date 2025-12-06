@@ -650,11 +650,13 @@ export class DataService {
                 region: this.awsRegion
             });
         }
+        // Convert File to ArrayBuffer to avoid getReader() error
+        const arrayBuffer = await file.arrayBuffer();
         const command = new PutObjectCommand({
             Bucket: DataStack.CourseFinderPhotosBucketName,
             Key: file.name,
             ACL: 'public-read',
-            Body: file
+            Body: arrayBuffer
         });
         await this.s3Client.send(command);
         return `https://${command.input.Bucket}.s3.${this.awsRegion}.amazonaws.com/${command.input.Key}`
@@ -823,11 +825,13 @@ export class DataService {
                 region: this.awsRegion
             });
         }
+        // Convert File to ArrayBuffer to avoid getReader() error
+        const arrayBuffer = await file.arrayBuffer();
         const command = new PutObjectCommand({
             Bucket: DataStack.CourseFinderPhotosBucketName,
             Key: fileName,
             ACL: 'public-read',
-            Body: file
+            Body: arrayBuffer
         });
         await this.s3Client.send(command);
         return `https://${command.input.Bucket}.s3.${this.awsRegion}.amazonaws.com/${command.input.Key}`
