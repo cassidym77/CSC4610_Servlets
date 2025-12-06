@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { DataService } from "../services/DataService";
-import { CourseEntry } from "./model/model";
+import { PostEntry } from "./model/model";
 import BlogPostComponent from "./BlogPostComponent";
 import './CoursesPage.css';
 
@@ -9,7 +9,7 @@ interface CoursesPageProps {
 }
 
 export default function CoursesPage({ dataService }: CoursesPageProps) {
-  const [posts, setPosts] = useState<CourseEntry[]>([]);
+  const [posts, setPosts] = useState<PostEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -39,7 +39,7 @@ export default function CoursesPage({ dataService }: CoursesPageProps) {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       result = result.filter(post => {
-        const title = (post.title || post.course_name || '').toLowerCase();
+        const title = (post.title || '').toLowerCase();
         const content = (post.content || '').toLowerCase();
         const authorId = (post.authorId || '').toLowerCase();
         

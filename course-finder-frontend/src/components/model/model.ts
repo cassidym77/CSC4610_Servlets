@@ -12,23 +12,18 @@ export interface Comment {
 
 export interface UserProfile {
     id: string,  // Will be "profile-{username}"
-    course_code: string,  // Required by backend, set to "PROFILE"
-    course_name: string,  // Required by backend, set to username
     biography?: string,
     profilePictureUrl?: string,
     username: string
 }
 
-export interface CourseEntry {
+export interface PostEntry {
     id: string,
-    course_code: string,
-    course_name: string,
+    title: string,
+    content: string,
+    isPublic: boolean,
+    authorId: string,  // Username of the post author
     photoUrl?: string,
-    // Blog post fields (optional, stored as additional data)
-    title?: string,
-    content?: string,
-    isPublic?: boolean,
-    authorId?: string,  // Username of the post author
     comments?: Comment[],
     // Voting fields
     upvotes?: number,

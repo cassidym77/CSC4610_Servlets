@@ -1,7 +1,7 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { AuthService } from "./AuthService";
 import { DataStack, ApiStack } from '../../../course-finder/outputs.json';
-import { CourseEntry, UserProfile } from "../components/model/model";
+import { PostEntry, UserProfile } from "../components/model/model";
 
 const coursesUrl = ApiStack.CoursesApiEndpoint75C265A0 + 'courses'
 
@@ -60,7 +60,7 @@ export class DataService {
         return '123';
     }
 
-    public async getCourses():Promise<CourseEntry[]>{
+    public async getCourses():Promise<PostEntry[]>{
         const getCoursesResult = await fetch(coursesUrl, {
             method: 'GET',
             headers: {
@@ -71,14 +71,14 @@ export class DataService {
         return getCoursesResultJson;
     }
 
-    public async getPublicBlogPosts(): Promise<CourseEntry[]> {
+    public async getPublicBlogPosts(): Promise<PostEntry[]> {
         const getPostsResult = await fetch(coursesUrl, {
             method: 'GET',
             headers: {
                 'Authorization': this.authService.jwtToken || ''
             }
         });
-        const allPosts: CourseEntry[] = await getPostsResult.json();
+        const allPosts: PostEntry[] = await getPostsResult.json();
         
         // Filter for public blog posts (has title/content and isPublic is true)
         // Also parse comments if stored as JSON string
@@ -113,7 +113,7 @@ export class DataService {
             });
     }
 
-    public async getBlogPostById(postId: string): Promise<CourseEntry> {
+    public async getBlogPostById(postId: string): Promise<PostEntry> {
         const getPostResult = await fetch(`${coursesUrl}?id=${postId}`, {
             method: 'GET',
             headers: {
@@ -547,16 +547,19 @@ export class DataService {
 
 
     public async createCourse(code: string, name: string, photo?: File){
-        const course = {} as any;  
-        course.course_code = code;
-        course.course_name = name;
+        // Legacy method - creates a post with title and content
+        const post = {} as any;  
+        post.title = name;
+        post.content = code; // Using code as content for legacy compatibility
+        post.isPublic = false;
+        post.authorId = this.authService.getUserName() || '';
         if (photo) {
             const uploadUrl = await this.uploadPublicFile(photo);
-            course.photoUrl = uploadUrl
+            post.photoUrl = uploadUrl
         }
         const postResult = await fetch(coursesUrl, {
             method: 'POST',
-            body: JSON.stringify(course),
+            body: JSON.stringify(post),
             headers: {
                 'Authorization': this.authService.jwtToken!
             }
@@ -575,23 +578,8 @@ export class DataService {
             throw new Error('Username not found');
         }
         
-        // Map blog post fields to course entry structure for backend compatibility
-        // The backend validation requires course_code and course_name
         // IMPORTANT: Do NOT include 'id' field - backend will generate a unique ID
         const blogPost = {} as any;  
-        blogPost.course_name = title;  // Map title to course_name (required by backend)
-        // Generate a short code from title for course_code (required by backend)
-        // Use first few words of title, uppercase, max 20 chars
-        // Add timestamp to ensure uniqueness even with similar titles
-        const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
-        const codeFromTitle = (title
-            .split(' ')
-            .slice(0, 3)
-            .join('')
-            .toUpperCase()
-            .substring(0, 14) || 'BLOG') + timestamp;
-        blogPost.course_code = codeFromTitle;
-        // Store original blog post fields as additional data
         blogPost.title = title;
         blogPost.content = content;
         blogPost.isPublic = isPublic;
@@ -688,8 +676,6 @@ export class DataService {
                 // Ensure all fields are properly set and return a clean UserProfile object
                 const userProfile: UserProfile = {
                     id: profile.id || profileId,
-                    course_code: profile.course_code || 'PROFILE',
-                    course_name: profile.course_name || username,
                     biography: profile.biography || '',
                     profilePictureUrl: profile.profilePictureUrl || undefined,
                     username: profile.username || username
@@ -755,8 +741,6 @@ export class DataService {
             // Create new profile
             const profile: UserProfile = {
                 id: profileId,
-                course_code: 'PROFILE',  // Required by backend
-                course_name: username,   // Required by backend
                 biography: biography || '',
                 profilePictureUrl: (profilePictureUrl && !profilePictureUrl.startsWith('blob:')) ? profilePictureUrl : undefined,
                 username: username
@@ -805,7 +789,7 @@ export class DataService {
         return `https://${command.input.Bucket}.s3.${this.awsRegion}.amazonaws.com/${command.input.Key}`
     }
 
-    public async getUserPrivatePosts(): Promise<CourseEntry[]> {
+    public async getUserPrivatePosts(): Promise<PostEntry[]> {
         if (!this.authService.isAuthorized()) {
             return [];
         }
@@ -820,7 +804,7 @@ export class DataService {
                 'Authorization': this.authService.jwtToken || ''
             }
         });
-        const allPosts: CourseEntry[] = await getPostsResult.json();
+        const allPosts: PostEntry[] = await getPostsResult.json();
         
         // Filter for private blog posts owned by the current user
         // Use authorId if available, otherwise fall back to isPublic check
@@ -887,20 +871,7 @@ export class DataService {
         const authorId = currentPost.authorId || username;
 
         // Ensure we preserve the original ID - never update it
-        // Update title (mapped to course_name) - required by backend
-        const titleUpdateResult = await fetch(`${coursesUrl}?id=${postId}`, {
-            method: 'PUT',
-            body: JSON.stringify({ course_name: title }),
-            headers: {
-                'Authorization': this.authService.jwtToken!,
-                'Content-Type': 'application/json'
-            }
-        });
-        if (!titleUpdateResult.ok) {
-            throw new Error(`Failed to update title: ${await titleUpdateResult.text()}`);
-        }
-
-        // Update title field (blog post field)
+        // Update title field
         const titleFieldResult = await fetch(`${coursesUrl}?id=${postId}`, {
             method: 'PUT',
             body: JSON.stringify({ title: title }),
@@ -938,25 +909,6 @@ export class DataService {
         });
         if (!isPublicResult.ok) {
             console.warn('Failed to update isPublic:', await isPublicResult.text());
-        }
-
-        // Update course_code (generate from title) - required by backend
-        const codeFromTitle = title
-            .split(' ')
-            .slice(0, 3)
-            .join('')
-            .toUpperCase()
-            .substring(0, 20) || 'BLOG';
-        const codeResult = await fetch(`${coursesUrl}?id=${postId}`, {
-            method: 'PUT',
-            body: JSON.stringify({ course_code: codeFromTitle }),
-            headers: {
-                'Authorization': this.authService.jwtToken!,
-                'Content-Type': 'application/json'
-            }
-        });
-        if (!codeResult.ok) {
-            console.warn('Failed to update course_code:', await codeResult.text());
         }
 
         // Ensure authorId is set (preserve existing or set to current user)
@@ -1001,7 +953,7 @@ export class DataService {
         }
     }
 
-    public async getUserAllPosts(): Promise<CourseEntry[]> {
+    public async getUserAllPosts(): Promise<PostEntry[]> {
         // Get all posts created by the user (both public and private)
         if (!this.authService.isAuthorized()) {
             return [];
@@ -1017,7 +969,7 @@ export class DataService {
                 'Authorization': this.authService.jwtToken || ''
             }
         });
-        const allPosts: CourseEntry[] = await getPostsResult.json();
+        const allPosts: PostEntry[] = await getPostsResult.json();
         
         // Filter posts by authorId (username)
         return allPosts
@@ -1051,7 +1003,7 @@ export class DataService {
             });
     }
 
-    public async isPostOwner(post: CourseEntry): Promise<boolean> {
+    public async isPostOwner(post: PostEntry): Promise<boolean> {
         if (!this.authService.isAuthorized()) {
             return false;
         }

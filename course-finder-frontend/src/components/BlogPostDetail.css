@@ -200,7 +200,7 @@
   gap: 12px;
 }
 
-.postCode {
+.postAuthor {
   display: inline-block;
   background-color: var(--bg-secondary);
   padding: 6px 12px;
@@ -208,8 +208,6 @@
   font-size: 12px;
   color: var(--text-secondary);
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .blogPostBody {

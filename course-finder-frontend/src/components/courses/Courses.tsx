@@ -1,18 +1,16 @@
 import { useState, useEffect } from "react";
-import CourseComponent from "./CourseComponent";
 import { DataService } from "../../services/DataService";
 import { NavLink } from "react-router-dom";
-import { CourseEntry } from "../model/model";
+import { PostEntry } from "../model/model";
+import BlogPostComponent from "../BlogPostComponent";
 
 interface CoursesProps {
     dataService: DataService
 }
 
-import BlogPostComponent from "../BlogPostComponent";
-
 export default function Courses(props: CoursesProps){
 
-    const [posts, setPosts] = useState<CourseEntry[]>([]);
+    const [posts, setPosts] = useState<PostEntry[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>("");
 

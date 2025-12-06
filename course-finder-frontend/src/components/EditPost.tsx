@@ -1,7 +1,7 @@
 import { useState, useEffect, SyntheticEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DataService } from "../services/DataService";
-import { CourseEntry } from "./model/model";
+import { PostEntry } from "./model/model";
 import './EditPost.css';
 
 interface EditPostProps {
@@ -11,7 +11,7 @@ interface EditPostProps {
 export default function EditPost({ dataService }: EditPostProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [post, setPost] = useState<CourseEntry | null>(null);
+  const [post, setPost] = useState<PostEntry | null>(null);
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
   const [isPublic, setIsPublic] = useState<boolean>(true);
@@ -38,7 +38,7 @@ export default function EditPost({ dataService }: EditPostProps) {
         setLoading(true);
         const fetchedPost = await dataService.getBlogPostById(id);
         setPost(fetchedPost);
-        setTitle(fetchedPost.title || fetchedPost.course_name || "");
+        setTitle(fetchedPost.title || "");
         setContent(fetchedPost.content || "");
         setIsPublic(fetchedPost.isPublic !== false); // Default to true if undefined
         setError("");

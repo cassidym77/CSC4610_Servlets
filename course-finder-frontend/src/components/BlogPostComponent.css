@@ -57,7 +57,7 @@
   border-top: 1px solid var(--border-color);
 }
 
-.blogPostCode {
+.blogPostAuthor {
   display: inline-block;
   background-color: var(--bg-secondary);
   padding: 4px 10px;
@@ -65,8 +65,6 @@
   font-size: 12px;
   color: var(--text-secondary);
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .postVoting {

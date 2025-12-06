@@ -1,6 +1,8 @@
-export interface CourseEntry {
+export interface PostEntry {
     id: string,
-    course_name: string,
-    course_code: string,
+    title: string,
+    content: string,
+    isPublic: boolean,
+    authorId: string,
     photoUrl?: string
 }

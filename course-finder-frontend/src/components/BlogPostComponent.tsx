@@ -1,11 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { CourseEntry } from "./model/model";
+import { PostEntry } from "./model/model";
 import { DataService } from "../services/DataService";
 import './BlogPostComponent.css';
 
 interface BlogPostComponentProps {
-  post: CourseEntry;
+  post: PostEntry;
   dataService?: DataService;
   onDelete?: (postId: string) => void;
   showActions?: boolean;
@@ -21,7 +21,7 @@ export default function BlogPostComponent({ post, dataService, onDelete, showAct
 
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [voting, setVoting] = useState<boolean>(false);
-  const [currentPost, setCurrentPost] = useState<CourseEntry>(post);
+  const [currentPost, setCurrentPost] = useState<PostEntry>(post);
   
   useEffect(() => {
     setCurrentPost(post);
@@ -110,10 +110,10 @@ export default function BlogPostComponent({ post, dataService, onDelete, showAct
     <div className="blogPostComponent">
       <div className="blogPostContent">
         <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-          <h3 className="blogPostTitle">{post.title || post.course_name}</h3>
+          <h3 className="blogPostTitle">{post.title}</h3>
           <p className="blogPostPreview">{contentPreview}</p>
           <div className="blogPostMeta">
-            <span className="blogPostCode">{post.course_code}</span>
+            <span className="blogPostAuthor">By {post.authorId}</span>
           </div>
         </Link>
         {canShowActions && (

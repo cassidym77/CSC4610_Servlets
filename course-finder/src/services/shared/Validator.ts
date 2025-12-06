@@ -1,4 +1,4 @@
-import { CourseEntry } from "../model/Model";
+import { PostEntry } from "../model/Model";
 
 export class MissingFieldError extends Error {
     constructor(missingField: string) {
@@ -9,14 +9,20 @@ export class MissingFieldError extends Error {
 
 export class JsonError extends Error {}
 
-export function validateAsCourseEntry(arg: any){
-    if ((arg as CourseEntry).course_name == undefined) {
-        throw new MissingFieldError('course_name')
+export function validateAsPostEntry(arg: any){
+    if ((arg as PostEntry).title == undefined) {
+        throw new MissingFieldError('title')
     }
-    if ((arg as CourseEntry).course_code == undefined) {
-        throw new MissingFieldError('course_code')
+    if ((arg as PostEntry).content == undefined) {
+        throw new MissingFieldError('content')
     }
-    if ((arg as CourseEntry).id == undefined) {
+    if ((arg as PostEntry).isPublic == undefined) {
+        throw new MissingFieldError('isPublic')
+    }
+    if ((arg as PostEntry).authorId == undefined) {
+        throw new MissingFieldError('authorId')
+    }
+    if ((arg as PostEntry).id == undefined) {
         throw new MissingFieldError('id')
     }
 }

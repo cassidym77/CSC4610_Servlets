@@ -1,7 +1,7 @@
 import { useState, useEffect, SyntheticEvent } from "react";
 import { useParams, useNavigate, NavLink } from "react-router-dom";
 import { DataService } from "../services/DataService";
-import { CourseEntry, Comment } from "./model/model";
+import { PostEntry, Comment } from "./model/model";
 import './BlogPostDetail.css';
 
 interface CommentItemProps {
@@ -114,7 +114,7 @@ interface BlogPostDetailProps {
 export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [post, setPost] = useState<CourseEntry | null>(null);
+  const [post, setPost] = useState<PostEntry | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [commentText, setCommentText] = useState<string>("");
@@ -246,7 +246,7 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
       <article className="blogPostContent">
         <div className="postHeader">
           <div className="postTitleSection">
-            <h1>{post.title || post.course_name}</h1>
+            <h1>{post.title}</h1>
             {/* Post Voting */}
             <div className="postVotingDetail">
               <button
@@ -315,7 +315,7 @@ export default function BlogPostDetail({ dataService }: BlogPostDetailProps) {
           )}
         </div>
         <div className="blogPostMeta">
-          <span className="postCode">{post.course_code}</span>
+          <span className="postAuthor">By {post.authorId}</span>
         </div>
         <div className="blogPostBody">
           {post.content?.split('\n').map((paragraph, index) => (

@@ -44,12 +44,12 @@ export class DataStack extends Stack {
         });
 
 
-        this.coursesTable = new Table(this, 'CoursesTable', {
+        this.coursesTable = new Table(this, 'PostsTable', {
             partitionKey : {
                 name: 'id',
                 type: AttributeType.STRING
             },
-            tableName: `CourseTable-${suffix}`
+            tableName: `PostTable-${suffix}`
         })
     }
 }
