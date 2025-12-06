@@ -11,9 +11,15 @@ export async function deletePost(event: APIGatewayProxyEvent, ddbClient: DynamoD
     const isAdmin = hasAdminGroup(event);
     
     // Get username from JWT token claims
-    const username = event.requestContext.authorizer?.claims['cognito:username'] || 
-                     event.requestContext.authorizer?.claims['username'] ||
-                     event.requestContext.authorizer?.claims['sub'];
+    // Prefer cognito:username (actual username/email used for login)
+    // Then try username (alternative claim)
+    // Then try email (sometimes Cognito uses email as username)
+    // Do NOT use 'sub' as fallback - it's a UUID and won't match the authorId stored in database
+    const claims = event.requestContext.authorizer?.claims || {};
+    const username = claims['cognito:username'] || 
+                     claims['username'] ||
+                     claims['email'] ||
+                     null;
 
     if(event.queryStringParameters && ('id' in event.queryStringParameters)) {
 
@@ -46,7 +52,32 @@ export async function deletePost(event: APIGatewayProxyEvent, ddbClient: DynamoD
             const post = unmarshall(getItemResponse.Item);
             
             // Check if user is the author
-            if (post.authorId !== username) {
+            // Handle case where authorId might be undefined or the comparison might fail
+            const postAuthorId = post.authorId;
+            
+            // Log for debugging (can be removed in production)
+            console.log('Delete authorization check:', {
+                username: username,
+                postAuthorId: postAuthorId,
+                postId: postId,
+                claims: event.requestContext.authorizer?.claims
+            });
+            
+            // If authorId is missing, deny access (safety first)
+            if (!postAuthorId) {
+                return {
+                    statusCode: 403,
+                    body: JSON.stringify(`Not authorized! Post author information not found.`)
+                }
+            }
+            
+            // Compare authorId with username
+            // Use case-sensitive comparison (authorId should match exactly what was stored)
+            // Trim whitespace in case of any data inconsistencies
+            const normalizedAuthorId = String(postAuthorId).trim();
+            const normalizedUsername = String(username).trim();
+            
+            if (normalizedAuthorId !== normalizedUsername) {
                 return {
                     statusCode: 403,
                     body: JSON.stringify(`Not authorized! You can only delete your own posts.`)
