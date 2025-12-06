@@ -5,17 +5,17 @@
     "CourseFinderPhotosBucketName": "course-finder-photos-12dbddc3428d",
     "ExportsOutputRefCoursesTable3F79D98E1FB54C97": "CourseTable-12dbddc3428d"
   },
-  "AuthStack": {
-    "CourseUserPoolId": "us-east-1_apDXDVPqf",
-    "CourseIdentityPoolId": "us-east-1:effcd346-355b-46d5-8202-fa38f242e582",
-    "CourseUserPoolClientId": "1q52v6s1a290pq4uo5bhjlq941",
-    "ExportsOutputFnGetAttCourseUserPoolE5742543ArnEC87DBD7": "arn:aws:cognito-idp:us-east-1:182066453421:userpool/us-east-1_apDXDVPqf"
-  },
   "UiDeploymentStack": {
     "CourseFinderUrl": "d1igxge17piu96.cloudfront.net"
   },
   "LambdaStack": {
     "ExportsOutputFnGetAttCoursesLambdaDB1FA9CAArnCEC6E665": "arn:aws:lambda:us-east-1:182066453421:function:LambdaStack-CoursesLambdaDB1FA9CA-PQzGWGtJmnKf"
+  },
+  "AuthStack": {
+    "CourseUserPoolId": "us-east-1_apDXDVPqf",
+    "CourseIdentityPoolId": "us-east-1:effcd346-355b-46d5-8202-fa38f242e582",
+    "CourseUserPoolClientId": "1q52v6s1a290pq4uo5bhjlq941",
+    "ExportsOutputFnGetAttCourseUserPoolE5742543ArnEC87DBD7": "arn:aws:cognito-idp:us-east-1:182066453421:userpool/us-east-1_apDXDVPqf"
   },
   "ApiStack": {
     "CoursesApiEndpoint75C265A0": "https://ywdk78jzs8.execute-api.us-east-1.amazonaws.com/prod/"
