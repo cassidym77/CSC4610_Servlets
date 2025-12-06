@@ -569,7 +569,8 @@ export class DataService {
         if (!this.authService.isAuthorized()) {
             throw new Error('User must be logged in to create posts');
         }
-        const username = this.authService.getUserName();
+        // Use username from JWT token to match backend extraction logic
+        const username = (this.authService as any).getUsernameFromToken() || this.authService.getUserName();
         if (!username) {
             throw new Error('Username not found');
         }
@@ -594,7 +595,7 @@ export class DataService {
         blogPost.title = title;
         blogPost.content = content;
         blogPost.isPublic = isPublic;
-        blogPost.authorId = username;  // Store the author's username
+        blogPost.authorId = username;  // Store the author's username (from JWT token to match backend)
         // Initialize vote fields
         blogPost.upvotes = 0;
         blogPost.downvotes = 0;
@@ -625,10 +626,12 @@ export class DataService {
         
         // After creation, update the authorId field to ensure it's stored
         // (in case the backend doesn't preserve it from the initial POST)
+        // Use JWT token username to match backend extraction
+        const tokenUsername = (this.authService as any).getUsernameFromToken() || username;
         try {
             await fetch(`${coursesUrl}?id=${postResultJSON.id}`, {
                 method: 'PUT',
-                body: JSON.stringify({ authorId: username }),
+                body: JSON.stringify({ authorId: tokenUsername }),
                 headers: {
                     'Authorization': this.authService.jwtToken!,
                     'Content-Type': 'application/json'
@@ -729,8 +732,8 @@ export class DataService {
             }
             
             // Update profile picture URL if provided
-            // Update profile picture URL if provided (and it's not a blob URL)
-            // Only update if we have a valid URL to save
+            // Always update profile picture URL if it's provided and valid (not a blob URL)
+            // This ensures the profile picture is saved even if it was previously set
             if (profilePictureUrl !== undefined && profilePictureUrl && !profilePictureUrl.startsWith('blob:')) {
                 const pictureUpdateResult = await fetch(`${coursesUrl}?id=${profileId}`, {
                     method: 'PUT',
@@ -742,12 +745,12 @@ export class DataService {
                 });
                 if (!pictureUpdateResult.ok) {
                     const errorText = await pictureUpdateResult.text();
-                    // Log warning but don't fail the entire save operation
-                    console.warn(`Failed to update profile picture: ${errorText}`);
+                    // Throw error instead of just warning to ensure user knows if save failed
+                    throw new Error(`Failed to update profile picture: ${errorText}`);
                 }
             }
-            // If profilePictureUrl is undefined or a blob URL, we don't update it
-            // This preserves the existing profile picture URL
+            // If profilePictureUrl is undefined, empty, or a blob URL, we don't update it
+            // This preserves the existing profile picture URL (or leaves it empty if none exists)
         } else {
             // Create new profile
             const profile: UserProfile = {
@@ -879,7 +882,8 @@ export class DataService {
         }
 
         // Preserve authorId if it exists, or set it if it doesn't
-        const username = this.authService.getUserName();
+        // Use JWT token username to match backend extraction
+        const username = (this.authService as any).getUsernameFromToken() || this.authService.getUserName();
         const authorId = currentPost.authorId || username;
 
         // Ensure we preserve the original ID - never update it
@@ -1057,8 +1061,11 @@ export class DataService {
         }
         
         // Check ownership using authorId field (most reliable)
+        // Use JWT token username to match what was used when creating the post
+        const tokenUsername = (this.authService as any).getUsernameFromToken() || username;
         if (post.authorId) {
-            return post.authorId === username;
+            // Check against both JWT token username and stored username for backward compatibility
+            return post.authorId === tokenUsername || post.authorId === username;
         }
         
         // Fallback: For older posts without authorId, check if it's in user's private posts

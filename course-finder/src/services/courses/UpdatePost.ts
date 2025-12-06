@@ -11,7 +11,15 @@ export async function updatePost(event: APIGatewayProxyEvent, ddbClient: DynamoD
         const parsedBody = JSON.parse(event.body);
         const postId = event.queryStringParameters['id'];
         const requestBodyKey = Object.keys(parsedBody)[0];
-        const requestBodyValue = parsedBody[requestBodyKey];
+        let requestBodyValue = parsedBody[requestBodyKey];
+
+        // Ensure the value is a string (handle null/undefined by converting to empty string)
+        // This is important for fields like biography which might be empty
+        if (requestBodyValue === null || requestBodyValue === undefined) {
+            requestBodyValue = '';
+        }
+        // Convert to string if it's not already
+        const stringValue = String(requestBodyValue);
 
         const updateResult = await ddbClient.send(new UpdateItemCommand({
             TableName: process.env.TABLE_NAME,
@@ -21,7 +29,7 @@ export async function updatePost(event: APIGatewayProxyEvent, ddbClient: DynamoD
             UpdateExpression: 'set #zzzNew = :new',
             ExpressionAttributeValues: {
                 ':new': {
-                    S: requestBodyValue
+                    S: stringValue
                 }
             },
             ExpressionAttributeNames: {

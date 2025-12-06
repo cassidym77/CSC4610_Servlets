@@ -125,6 +125,30 @@ export class AuthService {
         return this.userName;
     }
 
+    /**
+     * Extract username from JWT token claims to match backend extraction logic
+     * This ensures the username used in authorId matches what the backend will extract
+     */
+    public getUsernameFromToken(): string | null {
+        if (!this.jwtToken) {
+            return null;
+        }
+        try {
+            // JWT tokens have 3 parts: header.payload.signature
+            const parts = this.jwtToken.split('.');
+            if (parts.length !== 3) {
+                return null;
+            }
+            // Decode the payload (second part)
+            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            // Match backend extraction logic: cognito:username || username || sub
+            return payload['cognito:username'] || payload['username'] || payload['sub'] || null;
+        } catch (error) {
+            console.error('Error decoding JWT token:', error);
+            return null;
+        }
+    }
+
     private async generateTemporaryCredentials() {
         const cognitoIdentityPool = `cognito-idp.${awsRegion}.amazonaws.com/${AuthStack.CourseUserPoolId}`;
         const cognitoIdentity = new CognitoIdentityClient({
