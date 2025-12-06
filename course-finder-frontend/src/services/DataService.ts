@@ -715,9 +715,11 @@ export class DataService {
         if (existingProfile) {
             // Update existing profile - Update one field at a time (backend limitation)
             // Always update biography (even if empty, to clear it if needed)
+            // Ensure biography is a string (trim whitespace but preserve content)
+            const biographyValue = biography !== undefined && biography !== null ? String(biography).trim() : '';
             const biographyUpdateResult = await fetch(`${coursesUrl}?id=${profileId}`, {
                 method: 'PUT',
-                body: JSON.stringify({ biography: biography || '' }),
+                body: JSON.stringify({ biography: biographyValue }),
                 headers: {
                     'Authorization': this.authService.jwtToken!,
                     'Content-Type': 'application/json'
@@ -728,10 +730,13 @@ export class DataService {
                 throw new Error(`Failed to update biography: ${errorText}`);
             }
             
-            // Update profile picture URL if provided
-            // Update profile picture URL if provided (and it's not a blob URL)
-            // Only update if we have a valid URL to save
-            if (profilePictureUrl !== undefined && profilePictureUrl && !profilePictureUrl.startsWith('blob:')) {
+            // Verify the biography was saved by checking the response
+            // Add a small delay to ensure the update is committed
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Update profile picture URL if provided and valid
+            // Only update if we have a valid URL to save (not undefined, not empty, not blob URL)
+            if (profilePictureUrl !== undefined && profilePictureUrl && profilePictureUrl.trim() !== '' && !profilePictureUrl.startsWith('blob:')) {
                 const pictureUpdateResult = await fetch(`${coursesUrl}?id=${profileId}`, {
                     method: 'PUT',
                     body: JSON.stringify({ profilePictureUrl: profilePictureUrl }),
@@ -742,22 +747,27 @@ export class DataService {
                 });
                 if (!pictureUpdateResult.ok) {
                     const errorText = await pictureUpdateResult.text();
-                    // Log warning but don't fail the entire save operation
-                    console.warn(`Failed to update profile picture: ${errorText}`);
+                    throw new Error(`Failed to update profile picture: ${errorText}`);
                 }
             }
-            // If profilePictureUrl is undefined or a blob URL, we don't update it
+            // If profilePictureUrl is undefined, empty, or a blob URL, we don't update it
             // This preserves the existing profile picture URL
         } else {
-            // Create new profile
-            const profile: UserProfile = {
+            // Create new profile - build object with only defined fields
+            // Ensure biography is always included as a string (even if empty)
+            const biographyValue = biography !== undefined && biography !== null ? String(biography).trim() : '';
+            const profile: any = {
                 id: profileId,
                 course_code: 'PROFILE',  // Required by backend
                 course_name: username,   // Required by backend
-                biography: biography || '',
-                profilePictureUrl: (profilePictureUrl && !profilePictureUrl.startsWith('blob:')) ? profilePictureUrl : undefined,
+                biography: biographyValue,  // Always include biography, even if empty
                 username: username
             };
+            
+            // Only include profilePictureUrl if it's a valid URL (not undefined, not empty, not blob)
+            if (profilePictureUrl && profilePictureUrl.trim() !== '' && !profilePictureUrl.startsWith('blob:')) {
+                profile.profilePictureUrl = profilePictureUrl;
+            }
             
             const postResult = await fetch(coursesUrl, {
                 method: 'POST',
@@ -770,6 +780,27 @@ export class DataService {
             if (!postResult.ok) {
                 const errorText = await postResult.text();
                 throw new Error(`Failed to save profile: ${errorText}`);
+            }
+            
+            // After creating, if we have a profilePictureUrl, ensure it's saved
+            // (in case the initial POST didn't preserve it)
+            if (profilePictureUrl && profilePictureUrl.trim() !== '' && !profilePictureUrl.startsWith('blob:')) {
+                try {
+                    const pictureUpdateResult = await fetch(`${coursesUrl}?id=${profileId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ profilePictureUrl: profilePictureUrl }),
+                        headers: {
+                            'Authorization': this.authService.jwtToken!,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    if (!pictureUpdateResult.ok) {
+                        console.warn('Failed to set profilePictureUrl after profile creation:', await pictureUpdateResult.text());
+                    }
+                } catch (err) {
+                    console.warn('Failed to set profilePictureUrl after profile creation:', err);
+                    // Non-critical, continue anyway
+                }
             }
         }
     }
