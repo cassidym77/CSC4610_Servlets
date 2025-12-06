@@ -140,7 +140,7 @@
      }
     ],
     "SourceObjectKeys": [
-     "f81406ab32bee46da3520a178e903a16506f3d44ae7766a5000d00ce475abfc1.zip"
+     "577443f57a40f9788588cd06a7671fea54beedbeb6864a0204e247b28fb2e7a3.zip"
     ],
     "DestinationBucketName": {
      "Ref": "uiDeploymentBucket0CB7637D"
