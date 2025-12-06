@@ -6,9 +6,12 @@ import { createRandomId, parseJSON } from "../shared/Utils";
 
 export async function postBlgPst(event: APIGatewayProxyEvent, ddbClient: DynamoDBClient): Promise<APIGatewayProxyResult> {
 
-    const randomId = createRandomId();
     const item = parseJSON(event.body);
-    item.id = randomId
+    // Only generate a random ID if one isn't already provided
+    // This allows profiles to use their custom ID (profile-{username})
+    if (!item.id) {
+        item.id = createRandomId();
+    }
     validateAsCourseEntry(item)
 
     const result = await ddbClient.send(new PutItemCommand({
@@ -18,6 +21,6 @@ export async function postBlgPst(event: APIGatewayProxyEvent, ddbClient: DynamoD
 
     return {
         statusCode: 201,
-        body: JSON.stringify({id: randomId})
+        body: JSON.stringify({id: item.id})
     }
 }

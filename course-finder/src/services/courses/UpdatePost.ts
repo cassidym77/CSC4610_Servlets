@@ -11,7 +11,15 @@ export async function updatePost(event: APIGatewayProxyEvent, ddbClient: DynamoD
         const parsedBody = JSON.parse(event.body);
         const postId = event.queryStringParameters['id'];
         const requestBodyKey = Object.keys(parsedBody)[0];
-        const requestBodyValue = parsedBody[requestBodyKey];
+        let requestBodyValue = parsedBody[requestBodyKey];
+        
+        // Ensure the value is converted to a string (handle null, undefined, numbers, etc.)
+        // Empty strings are valid and should be preserved
+        if (requestBodyValue === null || requestBodyValue === undefined) {
+            requestBodyValue = '';
+        } else {
+            requestBodyValue = String(requestBodyValue);
+        }
 
         const updateResult = await ddbClient.send(new UpdateItemCommand({
             TableName: process.env.TABLE_NAME,
